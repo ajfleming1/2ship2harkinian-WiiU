@@ -52,7 +52,9 @@ void guMtxIdentF(f32 mf[4][4]) {
 }
 
 void guMtxIdent(Mtx* m) {
-    guMtxIdentF(m->m);
+    float mf[4][4];
+    guMtxIdentF(mf);
+    guMtxF2L(mf, m);
 }
 
 void guTranslateF(float m[4][4], float x, float y, float z) {

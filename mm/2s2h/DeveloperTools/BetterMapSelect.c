@@ -15,13 +15,21 @@ void BetterMapSelect_LoadGame(MapSelectState* mapSelectState, u32 entrance, s32 
     MapSelect_LoadGame(mapSelectState, entrance, spawn);
 }
 
-void BetterMapSelect_LoadFileSelect(MapSelectState* mapSelectState) {
+void BetterMapSelect_LoadFileSelect(MapSelectState* mapSelectState, u32 entrance, s32 spawn) {
+    (void)entrance;
+    (void)spawn;
     CVarSetInteger("gDeveloperTools.BetterMapSelect.CurrentScene", mapSelectState->currentScene);
     CVarSetInteger("gDeveloperTools.BetterMapSelect.TopDisplayedScene", mapSelectState->topDisplayedScene);
     CVarSetInteger("gDeveloperTools.BetterMapSelect.PageDownIndex", mapSelectState->pageDownIndex);
     CVarSave();
     STOP_GAMESTATE(&mapSelectState->state);
     SET_NEXT_GAMESTATE(&mapSelectState->state, FileSelect_Init, sizeof(FileSelectState));
+}
+
+void BetterMapSelect_LoadConsoleLogo(MapSelectState* mapSelectState, u32 entrance, s32 spawn) {
+    (void)entrance;
+    (void)spawn;
+    MapSelect_LoadConsoleLogo(mapSelectState);
 }
 
 // 2S2H Added columns to scene table: entranceSceneId, betterMapSelectIndex, humanName
@@ -33,7 +41,7 @@ void BetterMapSelect_LoadFileSelect(MapSelectState* mapSelectState) {
 static SceneSelectEntry sBetterScenes[104] = {
 #include "tables/scene_table.h"
     { "File Select", BetterMapSelect_LoadFileSelect, 0 },
-    { "Title Screen", MapSelect_LoadConsoleLogo, 0 },
+    { "Title Screen", BetterMapSelect_LoadConsoleLogo, 0 },
 };
 
 #undef DEFINE_SCENE

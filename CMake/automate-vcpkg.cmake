@@ -127,7 +127,7 @@ macro(_install_or_update_vcpkg)
         execute_process(COMMAND git pull WORKING_DIRECTORY ${VCPKG_ROOT})
     endif()
 
-    if(NOT EXISTS ${VCPKG_ROOT}/README.md)
+    if(NOT EXISTS ${VCPKG_ROOT}/NOTICE.txt)
         message(FATAL_ERROR "***** FATAL ERROR: Could not clone vcpkg *****")
     endif()
 
