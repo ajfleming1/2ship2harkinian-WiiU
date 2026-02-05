@@ -6,6 +6,22 @@ set(CMAKE_CXX_STANDARD 20 CACHE STRING "The C++ standard to use")
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15" CACHE STRING "Minimum OS X deployment version")
 
 project(2s2h VERSION 1.0.1 LANGUAGES C CXX)
+
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    set(CMAKE_CXX_USE_RESPONSE_FILE_FOR_LIBRARIES 1)
+    set(CMAKE_CXX_USE_RESPONSE_FILE_FOR_OBJECTS 1)
+endif()
+
+# On CafeOS (Wii U) with MSYS2, the ar command line can exceed the OS limit
+# due to the large number of object files. Use a wrapper script that batches
+# object files to avoid "Argument list too long" errors.
+if (CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
+    set(CMAKE_C_ARCHIVE_CREATE "${CMAKE_SOURCE_DIR}/CMake/ar-wrapper.sh <CMAKE_AR> qc <TARGET> <OBJECTS>")
+    set(CMAKE_C_ARCHIVE_APPEND "${CMAKE_SOURCE_DIR}/CMake/ar-wrapper.sh <CMAKE_AR> q <TARGET> <OBJECTS>")
+    set(CMAKE_CXX_ARCHIVE_CREATE "${CMAKE_SOURCE_DIR}/CMake/ar-wrapper.sh <CMAKE_AR> qc <TARGET> <OBJECTS>")
+    set(CMAKE_CXX_ARCHIVE_APPEND "${CMAKE_SOURCE_DIR}/CMake/ar-wrapper.sh <CMAKE_AR> q <TARGET> <OBJECTS>")
+endif()
+
 include(CMake/2ship-cvars.cmake)
 include(CMake/lus-cvars.cmake)
 set(PROJECT_BUILD_NAME "Rika Bravo" CACHE STRING "")

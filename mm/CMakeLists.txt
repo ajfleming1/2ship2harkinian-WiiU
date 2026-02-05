@@ -292,7 +292,10 @@ set(ALL_FILES
 ################################################################################
 # Target
 ################################################################################
-add_executable(${PROJECT_NAME} ${ALL_FILES})
+add_library(2ship_lib STATIC)
+target_sources(2ship_lib PRIVATE ${ALL_FILES})
+add_executable(${PROJECT_NAME} dummy.cpp)
+target_link_libraries(${PROJECT_NAME} PRIVATE 2ship_lib)
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
 use_props(${PROJECT_NAME} "${CMAKE_CONFIGURATION_TYPES}" "${DEFAULT_CXX_PROPS}")
@@ -370,12 +373,12 @@ if (BUILD_CROWD_CONTROL)
     set(SDL2-NET-INCLUDE ${SDL_NET_INCLUDE_DIRS})
 endif()
 
-target_include_directories(${PROJECT_NAME} PRIVATE assets
+target_include_directories(2ship_lib PUBLIC assets
 	${CMAKE_CURRENT_SOURCE_DIR}/include/
 	${CMAKE_CURRENT_SOURCE_DIR}/include/PR
 	${CMAKE_CURRENT_SOURCE_DIR}/src/
-    ${CMAKE_CURRENT_SOURCE_DIR}/../libultraship
-    ${CMAKE_CURRENT_SOURCE_DIR}/../libultraship/include
+    ${CMAKE_SOURCE_DIR}/libultraship/src
+    ${CMAKE_SOURCE_DIR}/libultraship/include
 	${CMAKE_CURRENT_SOURCE_DIR}/../libultraship/src
     ${CMAKE_CURRENT_SOURCE_DIR}/../libultraship/src/log
     ${CMAKE_CURRENT_SOURCE_DIR}/../libultraship/src/debug
@@ -397,7 +400,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE assets
     ${CMAKE_CURRENT_SOURCE_DIR}/../libultraship/extern/tinyxml2
     ${CMAKE_CURRENT_SOURCE_DIR}/../libultraship/libultraship/Lib/
 	${CMAKE_CURRENT_SOURCE_DIR}/../libultraship/libultraship/Lib/libjpeg/include/
-	${CMAKE_CURRENT_SOURCE_DIR}/../libultraship/libultraship/Lib/spdlog/include/
+	${CMAKE_BINARY_DIR}/_deps/spdlog-src/include
     ${CMAKE_CURRENT_SOURCE_DIR}/../libultraship/src/graphic/Fast3D/U64/PR
     ${CMAKE_CURRENT_SOURCE_DIR}/../libultraship/src/graphic
     ${CMAKE_CURRENT_SOURCE_DIR}/../ZAPDTR/ZAPD/resource/type
@@ -443,6 +446,15 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
 		"SPDLOG_NO_THREAD_ID;"
         "SPDLOG_NO_TLS;"
 		"STBI_NO_THREAD_LOCALS;"
+	)
+	target_compile_definitions(2ship_lib PRIVATE
+		"$<$<CONFIG:Debug>:_DEBUG>"
+		"$<$<CONFIG:Release>:NDEBUG>"
+		"F3DEX_GBI_2"
+		"SPDLOG_ACTIVE_LEVEL=3"
+		"SPDLOG_NO_THREAD_ID"
+		"SPDLOG_NO_TLS"
+		"STBI_NO_THREAD_LOCALS"
 	)
 elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU|Clang|AppleClang")
 	target_compile_definitions(${PROJECT_NAME} PRIVATE
@@ -581,6 +593,23 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
                 -Wno-stringop-overflow
             >
         )
+        target_compile_options(2ship_lib PRIVATE
+            -O2
+            -Wno-multichar
+            -Wno-return-type
+            -Wno-narrowing
+            -Wno-switch-outside-range
+            $<$<COMPILE_LANGUAGE:C>:
+                -Werror-implicit-function-declaration
+                -Wno-incompatible-pointer-types
+                -Wno-discarded-array-qualifiers
+                -Wno-discarded-qualifiers
+                -Wno-int-conversion
+                -Wno-builtin-declaration-mismatch
+                -Wno-switch-unreachable
+                -Wno-stringop-overflow
+            >
+        )
     else()
         if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
 		set(CPU_OPTION -msse2 -mfpmath=sse)
@@ -668,6 +697,7 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
     )
 elseif(CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
     find_package(SDL2 REQUIRED)
+    find_package(nlohmann_json REQUIRED)
     set(ADDITIONAL_LIBRARY_DEPENDENCIES
         "libultraship;"
         SDL2::SDL2-static
@@ -675,6 +705,12 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
     target_include_directories(${PROJECT_NAME} PRIVATE
         ${DEVKITPRO}/portlibs/wiiu/include/
     )
+    target_link_libraries(2ship_lib PUBLIC libultraship)
+    # Force the linker to pull 'main' from lib2ship_lib.a.
+    # WUT's CRT references main, but since it's added by specs after archives
+    # are processed, the linker won't pull main.o from the static archive
+    # without this hint.
+    target_link_options(${PROJECT_NAME} PRIVATE -Wl,--undefined=main)
 else()
     find_package(SDL2)
     set(THREADS_PREFER_PTHREAD_FLAG ON)
