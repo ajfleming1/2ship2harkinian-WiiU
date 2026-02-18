@@ -19,14 +19,15 @@ Alternatively, place `2ship.rpx` directly in `SD:/wiiu/apps/2ship/` instead of u
 
 ### Extracting mm.o2r
 
-The `mm.o2r` file contains assets extracted from your own Majora's Mask ROM. You need a Windows build to generate it:
+The `mm.o2r` file contains assets extracted from your own Majora's Mask ROM.
 
-```bash
-cmake -S . -B build-vs -G "Visual Studio 17 2022" -A x64
-cmake --build build-vs --target ExtractAssets --config Debug
-```
+**Important:** This Wii U port is based on version 1.0.1 of 2Ship. You **must** use the 1.0.1 PC release to generate your `mm.o2r`. Using a newer version (1.1.0+) will cause the game to crash after the logo screen due to incompatible asset formats.
 
-The resulting `mm.o2r` will be in `x64/Debug/`.
+1. Download the **1.0.1 PC release**: https://github.com/HarbourMasters/2ship2harkinian/releases/tag/1.0.1
+2. Run it and use the built-in extractor to generate `mm.o2r` from your Majora's Mask ROM
+3. Copy the generated `mm.o2r` to `SD:/wiiu/apps/2ship/`
+
+**Supported ROMs:** Majora's Mask US 1.0 (N64) or US GameCube
 
 ## Building for Wii U
 
