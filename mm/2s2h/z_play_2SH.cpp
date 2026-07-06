@@ -3,6 +3,9 @@
 #include "2s2h/resource/type/Scene.h"
 #include <utils/StringHelper.h>
 #include <Vertex.h>
+#ifdef __WIIU__
+#include <Fast3D/gfx_pc.h>
+#endif
 extern "C" {
 #include "global.h"
 extern uintptr_t gSegments[NUM_SEGMENTS];
@@ -45,6 +48,15 @@ extern "C" void OTRPlay_SpawnScene(PlayState* play, s32 sceneId, s32 spawn) {
     play->sceneConfig = scene->drawConfig;
     std::string scenePath =
         StringHelper::Sprintf("scenes/nonmq/%s/%s", scene->segment.fileName, scene->segment.fileName);
+#ifdef __WIIU__
+    // The Wii U only has ~800MB of usable memory and the resource cache grows without bound as
+    // areas stream in, eventually crashing with bad_alloc. Evict all scene/room resources before
+    // loading the new scene; the incoming scene reloads fresh below. The gfx texture cache is
+    // keyed by resource data addresses, so it must be cleared to avoid stale entries pointing at
+    // freed (and possibly reused) memory.
+    Ship::Context::GetInstance()->GetResourceManager()->UnloadDirectory("scenes/*");
+    gfx_texture_cache_clear();
+#endif
     play->sceneSegment = OTRPlay_LoadFile(play, scenePath.c_str());
     scene->unk_D = 0;
     gSegments[2] = (uintptr_t)play->sceneSegment;
