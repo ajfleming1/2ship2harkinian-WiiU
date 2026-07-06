@@ -711,6 +711,9 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
     # are processed, the linker won't pull main.o from the static archive
     # without this hint.
     target_link_options(${PROJECT_NAME} PRIVATE -Wl,--undefined=main)
+    # Route abort() to __wrap_abort (WiiUImpl.cpp) so crashes show a useful
+    # message on screen instead of wut's generic "Abort called."
+    target_link_options(${PROJECT_NAME} PRIVATE -Wl,--wrap=abort)
 else()
     find_package(SDL2)
     set(THREADS_PREFER_PTHREAD_FLAG ON)
