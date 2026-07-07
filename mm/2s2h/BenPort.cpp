@@ -466,16 +466,28 @@ extern "C" void InitOTR() {
     Ship::WiiU::Init(appShortName);
 #endif
 
+#ifdef __WIIU__
+    WiiU_ReportHeap("before OTRGlobals (context/window/archives)");
+#endif
     OTRGlobals::Instance = new OTRGlobals();
+#ifdef __WIIU__
+    WiiU_ReportHeap("after OTRGlobals");
+#endif
     GameInteractor::Instance = new GameInteractor();
     BenGui::SetupGuiElements();
     InitEnhancements();
     InitDeveloperTools();
     GfxPatcher_ApplyNecessaryAuthenticPatches();
     DebugConsole_Init();
+#ifdef __WIIU__
+    WiiU_ReportHeap("after gui/enhancements");
+#endif
 
     OTRMessage_Init();
     OTRAudio_Init();
+#ifdef __WIIU__
+    WiiU_ReportHeap("after audio precache");
+#endif
     // OTRExtScanner();
 
     GameInteractor::Instance->RegisterGameHook<GameInteractor::OnFileDropped>(Ben_ProcessDroppedFiles);
