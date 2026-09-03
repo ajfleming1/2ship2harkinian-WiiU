@@ -55,6 +55,7 @@ extern "C" void OTRPlay_SpawnScene(PlayState* play, s32 sceneId, s32 spawn) {
     // keyed by resource data addresses, so it must be cleared to avoid stale entries pointing at
     // freed (and possibly reused) memory.
     Ship::Context::GetInstance()->GetResourceManager()->UnloadDirectory("scenes/*");
+    Ship::Context::GetInstance()->GetResourceManager()->UnloadDirectory("objects/*");
     gfx_texture_cache_clear();
 #endif
     play->sceneSegment = OTRPlay_LoadFile(play, scenePath.c_str());
