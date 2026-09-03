@@ -4,6 +4,7 @@
 #include <utils/StringHelper.h>
 #include <Vertex.h>
 #ifdef __WIIU__
+#include <gx2/event.h>
 #include <Fast3D/gfx_pc.h>
 #endif
 extern "C" {
@@ -54,6 +55,9 @@ extern "C" void OTRPlay_SpawnScene(PlayState* play, s32 sceneId, s32 spawn) {
     // loading the new scene; the incoming scene reloads fresh below. The gfx texture cache is
     // keyed by resource data addresses, so it must be cleared to avoid stale entries pointing at
     // freed (and possibly reused) memory.
+    // Wait for the GPU to finish the previous frame before queuing textures for deletion,
+    // otherwise the next scene will overwrite them while they are still in flight, causing a hang.
+    GX2DrawDone();
     Ship::Context::GetInstance()->GetResourceManager()->UnloadDirectory("scenes/*");
     Ship::Context::GetInstance()->GetResourceManager()->UnloadDirectory("objects/*");
     gfx_texture_cache_clear();
