@@ -16,8 +16,12 @@ SetAnimatedMaterialListFactory::ReadResource(std::shared_ptr<Ship::ResourceInitD
     const auto data = std::static_pointer_cast<TextureAnimation>(
         Ship::Context::GetInstance()->GetResourceManager()->LoadResourceProcess(str.c_str()));
 
-    AnimatedMaterial* res = data->GetPointer();
-    setAnimatedMat->mat = res;
+    if (data != nullptr) {
+        setAnimatedMat->mat = data->GetPointer();
+    } else {
+        setAnimatedMat->mat = nullptr;
+        SPDLOG_ERROR("Failed to load texture animation: {}", str);
+    }
 
     return setAnimatedMat;
 }

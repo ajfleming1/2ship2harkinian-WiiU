@@ -16,7 +16,12 @@ std::shared_ptr<Ship::IResource> SetPathwaysMMFactory::ReadResource(std::shared_
         std::string pathFileName = reader->ReadString();
         auto path = std::static_pointer_cast<PathMM>(
             Ship::Context::GetInstance()->GetResourceManager()->LoadResourceProcess(pathFileName.c_str()));
-        setPathways->paths.push_back(path->GetPointer());
+        if (path != nullptr) {
+            setPathways->paths.push_back(path->GetPointer());
+        } else {
+            setPathways->paths.push_back(nullptr);
+            SPDLOG_ERROR("Failed to load pathway: {}", pathFileName);
+        }
     }
     return setPathways;
 }

@@ -60,6 +60,9 @@ extern "C" void OTRPlay_SpawnScene(PlayState* play, s32 sceneId, s32 spawn) {
     GX2DrawDone();
     Ship::Context::GetInstance()->GetResourceManager()->UnloadDirectory("scenes/*");
     Ship::Context::GetInstance()->GetResourceManager()->UnloadDirectory("objects/*");
+    Ship::Context::GetInstance()->GetResourceManager()->UnloadDirectory("animations/*");
+    Ship::Context::GetInstance()->GetResourceManager()->UnloadDirectory("materials/*");
+    Ship::Context::GetInstance()->GetResourceManager()->UnloadDirectory("textures/*");
     gfx_texture_cache_clear();
 #endif
     play->sceneSegment = OTRPlay_LoadFile(play, scenePath.c_str());

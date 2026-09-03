@@ -84,7 +84,12 @@ std::shared_ptr<Ship::IResource> ResourceFactoryBinaryAnimationV0::ReadResource(
         const auto animData = std::static_pointer_cast<Animation>(
             Ship::Context::GetInstance()->GetResourceManager()->LoadResourceProcess(path.c_str()));
 
-        animation->animationData.linkAnimationHeader.segment = animData->GetPointer();
+        if (animData != nullptr) {
+            animation->animationData.linkAnimationHeader.segment = animData->GetPointer();
+        } else {
+            animation->animationData.linkAnimationHeader.segment = nullptr;
+            SPDLOG_ERROR("Failed to load animation: {}", path);
+        }
     } else if (animType == AnimationType::Legacy) {
         SPDLOG_DEBUG("BEYTAH ANIMATION?!");
     }
