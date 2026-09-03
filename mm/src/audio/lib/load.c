@@ -1220,9 +1220,19 @@ void AudioLoad_Init(void* heap, size_t heapSize) {
 
     int seqListSize = 0;
     char** seqList = ResourceMgr_ListFiles("audio/sequences*", &seqListSize);
-    gSequenceToResourceSize = seqListSize;
-    gSequenceToResource = malloc(gSequenceToResourceSize * sizeof(*gSequenceToResource));
+    
+    uint32_t maxSeqNum = 0;
+    for (size_t i = 0; i < seqListSize; i++) {
+        SequenceData sDat = ResourceMgr_LoadSeqByName(seqList[i]);
+        if (sDat.seqNumber > maxSeqNum) {
+            maxSeqNum = sDat.seqNumber;
+        }
+    }
+    
+    gSequenceToResourceSize = maxSeqNum + 16;
+    gSequenceToResource = calloc(gSequenceToResourceSize, sizeof(*gSequenceToResource));
     gAudioCtx.seqLoadStatus = malloc(gSequenceToResourceSize * sizeof(*gAudioCtx.seqLoadStatus));
+    memset(gAudioCtx.seqLoadStatus, 5, gSequenceToResourceSize * sizeof(*gAudioCtx.seqLoadStatus));
 
     for (size_t i = 0; i < seqListSize; i++) {
         SequenceData sDat = ResourceMgr_LoadSeqByName(seqList[i]);

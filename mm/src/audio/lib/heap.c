@@ -628,6 +628,13 @@ void* AudioHeap_AllocCached(s32 tableType, size_t size, s32 cache, s32 id) {
         return temporaryAddr;
     }
 
+    if (loadedCache->persistent.numEntries >= ARRAY_COUNT(loadedCache->persistent.entries)) {
+        if (cache == CACHE_EITHER) {
+            return AudioHeap_AllocCached(tableType, size, CACHE_TEMPORARY, id);
+        }
+        return NULL;
+    }
+
     persistentAddr = AudioHeap_Alloc(&loadedCache->persistent.pool, size);
     loadedCache->persistent.entries[loadedCache->persistent.numEntries].addr = persistentAddr;
 
@@ -1100,6 +1107,10 @@ void* AudioHeap_SearchPermanentCache(s32 tableType, s32 id) {
 void* AudioHeap_AllocPermanent(s32 tableType, s32 id, size_t size) {
     void* addr;
     s32 index = gAudioCtx.permanentPool.count;
+
+    if (index >= ARRAY_COUNT(gAudioCtx.permanentEntries)) {
+        return NULL;
+    }
 
     addr = AudioHeap_Alloc(&gAudioCtx.permanentPool, size);
     gAudioCtx.permanentEntries[index].addr = addr;

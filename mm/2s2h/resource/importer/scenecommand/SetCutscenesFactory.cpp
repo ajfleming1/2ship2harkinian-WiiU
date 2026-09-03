@@ -23,7 +23,10 @@ std::shared_ptr<Ship::IResource> SetCutsceneFactoryMM::ReadResource(std::shared_
         if (resource != nullptr) {
             entry.data = std::static_pointer_cast<Cutscene>(resource)->GetPointer();
         } else {
-            entry.data = nullptr;
+            // Provide a valid empty cutscene script so the game doesn't crash in Cutscene_ProcessScript
+            // 1 total entry, 0 csFrameCount, CS_CAM_STOP command (-1)
+            static uint32_t sEmptyCutscene[] = { 1, 0, 0xFFFFFFFF };
+            entry.data = sEmptyCutscene;
             SPDLOG_ERROR("Failed to load cutscene: {}", path);
         }
         setCutscenes->entries.emplace_back(entry);
