@@ -510,7 +510,7 @@ u8* AudioLoad_GetFontsForSequence(s32 seqId, u32* outNumFonts, u8* buff) {
 
     // TODO: Sequence Remplacements
 
-    if (seqId > gSequenceToResourceSize || !gSequenceToResource[seqId]) {
+    if (seqId >= (s32)gSequenceToResourceSize || !gSequenceToResource[seqId]) {
         return NULL;
     }
 
@@ -610,6 +610,9 @@ s32 AudioLoad_SyncInitSeqPlayerInternal(s32 playerIndex, s32 seqId, s32 arg2) {
     if (gAudioCtx.seqReplaced[playerIndex]) {
         authCachePolicy = seqCachePolicyMap[seqId];
         seqId = gAudioCtx.seqToPlay[playerIndex];
+    }
+    if (seqId >= (s32)gSequenceToResourceSize || !gSequenceToResource[seqId]) {
+        return 0;
     }
     SequenceData seqData2 = ResourceMgr_LoadSeqByName(gSequenceToResource[seqId]);
     if (authCachePolicy != -1) {
@@ -767,6 +770,9 @@ void* AudioLoad_SyncLoad(s32 tableType, u32 id, s32* didAllocate) {
         SoundFont* fnt;
 
         if (tableType == SEQUENCE_TABLE) {
+            if (id >= gSequenceToResourceSize || !gSequenceToResource[id]) {
+                return NULL;
+            }
             SequenceData sData = ResourceMgr_LoadSeqByName(gSequenceToResource[id]);
             seqData = sData.seqData;
             size = sData.seqDataSize;
@@ -1452,6 +1458,16 @@ s32 AudioLoad_SlowLoadSeq(s32 seqId, u8* ramAddr, s8* isDone) {
 
     slowLoad->sample.sampleAddr = NULL;
     slowLoad->isDone = isDone;
+
+    if (seqId >= (s32)gSequenceToResourceSize || !gSequenceToResource[seqId]) {
+        if (ramAddr != NULL) {
+            ramAddr[0] = 0xFF; // end script opcode
+        }
+        if (isDone != NULL) {
+            *isDone = 1;
+        }
+        return 0;
+    }
 
     SequenceData sData = ResourceMgr_LoadSeqByName(gSequenceToResource[seqId]);
     size = sData.seqDataSize;

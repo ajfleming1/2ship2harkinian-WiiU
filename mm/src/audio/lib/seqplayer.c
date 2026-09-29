@@ -32,6 +32,7 @@ u8 AudioScript_GetInstrument(SequenceChannel* channel, u8 instId, Instrument** i
 
 SequenceData ResourceMgr_LoadSeqByName(const char* path);
 extern char** gSequenceToResource;
+extern size_t gSequenceToResourceSize;
 
 /**
  * sSeqInstructionArgsTable is a table for each sequence instruction
@@ -1425,6 +1426,11 @@ void AudioScript_SequenceChannelProcessScript(SequenceChannel* channel) {
                             gAudioCtx.seqReplaced[seqPlayer->playerIndex] = 0;
                         }
                         u16 seqId = seqPlayer->seqId; // AudioEditor_GetReplacementSeq(seqPlayer->seqId);
+                        
+                        if (seqId >= gSequenceToResourceSize || !gSequenceToResource[seqId]) {
+                            break;
+                        }
+
                         SequenceData sDat = ResourceMgr_LoadSeqByName(gSequenceToResource[seqId]);
 
                         // The game apparantely would sometimes do negative array lookups, the result of which would get
