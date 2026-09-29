@@ -1432,6 +1432,9 @@ void AudioScript_SequenceChannelProcessScript(SequenceChannel* channel) {
                         }
 
                         SequenceData sDat = ResourceMgr_LoadSeqByName(gSequenceToResource[seqId]);
+                        if (sDat.seqData == NULL) {
+                            break;
+                        }
 
                         // The game apparantely would sometimes do negative array lookups, the result of which would get
                         // rejected by AudioHeap_SearchCaches, never changing the actual fontid.

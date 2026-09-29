@@ -1131,6 +1131,10 @@ extern "C" Vtx* ResourceMgr_LoadVtxByName(char* path) {
 
 extern "C" SequenceData ResourceMgr_LoadSeqByName(const char* path) {
     SequenceData* sequence = (SequenceData*)ResourceGetDataByName(path);
+    if (sequence == nullptr) {
+        SequenceData emptySeq = {0};
+        return emptySeq;
+    }
     return *sequence;
 }
 extern "C" KeyFrameSkeleton* ResourceMgr_LoadKeyFrameSkelByName(const char* path) {

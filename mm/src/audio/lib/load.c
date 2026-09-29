@@ -615,6 +615,9 @@ s32 AudioLoad_SyncInitSeqPlayerInternal(s32 playerIndex, s32 seqId, s32 arg2) {
         return 0;
     }
     SequenceData seqData2 = ResourceMgr_LoadSeqByName(gSequenceToResource[seqId]);
+    if (seqData2.seqData == NULL) {
+        return 0;
+    }
     if (authCachePolicy != -1) {
         seqData2.cachePolicy = authCachePolicy;
     }
@@ -774,7 +777,10 @@ void* AudioLoad_SyncLoad(s32 tableType, u32 id, s32* didAllocate) {
                 return NULL;
             }
             SequenceData sData = ResourceMgr_LoadSeqByName(gSequenceToResource[id]);
-            seqData = sData.seqData;
+            if (sData.seqData == NULL) {
+                return NULL;
+            }
+            seqData = (char*)sData.seqData;
             size = sData.seqDataSize;
             medium = sData.medium;
             cachePolicy = sData.cachePolicy;
@@ -1470,6 +1476,15 @@ s32 AudioLoad_SlowLoadSeq(s32 seqId, u8* ramAddr, s8* isDone) {
     }
 
     SequenceData sData = ResourceMgr_LoadSeqByName(gSequenceToResource[seqId]);
+    if (sData.seqData == NULL) {
+        if (ramAddr != NULL) {
+            ramAddr[0] = 0xFF; // end script opcode
+        }
+        if (isDone != NULL) {
+            *isDone = 1;
+        }
+        return 0;
+    }
     size = sData.seqDataSize;
     slowLoad->curDevAddr = sData.seqData;
     slowLoad->medium = seqTable->entries[seqId].medium;
