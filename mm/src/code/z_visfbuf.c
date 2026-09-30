@@ -327,6 +327,7 @@ void VisFbuf_DrawInterpolate(VisFbuf* this, Gfx** gfxP, void* img, s32 width, s3
  * @param[in,out] img  Pointer to beginning of destination color image
  */
 void VisFbuf_Draw(VisFbuf* this, Gfx** gfxP, void* img) {
+#ifndef __WIIU__
     Gfx* gfx = *gfxP;
 
     gSPLoadUcodeL(gfx++, ucode_s2dex);
@@ -347,4 +348,5 @@ void VisFbuf_Draw(VisFbuf* this, Gfx** gfxP, void* img) {
     gSPLoadUcode(gfx++, SysUcode_GetUCode());
 
     *gfxP = gfx;
+#endif
 }

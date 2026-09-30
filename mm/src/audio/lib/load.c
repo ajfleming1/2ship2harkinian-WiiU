@@ -1456,8 +1456,8 @@ s32 AudioLoad_SlowLoadSeq(s32 seqId, u8* ramAddr, s8* isDone) {
     size_t size;
 
     if (seqId >= gAudioCtx.numSequences) {
-        *isDone = 0;
-        return -1;
+        *isDone = 1;
+        return 0;
     }
 
     seqId = AudioLoad_GetRealTableIndex(SEQUENCE_TABLE, seqId);
