@@ -9,6 +9,7 @@
 #include "overlays/actors/ovl_En_Elf/z_en_elf.h"
 #include <string.h>
 #include "2s2h/Enhancements/GameInteractor/GameInteractor.h"
+#include "2s2h/BenPort.h"
 
 s16 sCutsceneQuakeIndex;
 struct CutsceneCamera sCutsceneCameraInfo;
@@ -1171,6 +1172,12 @@ void Cutscene_ProcessScript(PlayState* play, CutsceneContext* csCtx, u8* script)
     s32 pad2;
     s32 csFrameCount;
     void* cmd;
+
+    if (script == NULL) {
+        OTR_ShowNotification("Failed to load cutscene data (missing or corrupt asset). Skipping cutscene.");
+        csCtx->state = CS_STATE_STOP;
+        return;
+    }
 
     // Read the command list count and the ending frame for this cutscene
     memcpy(&totalEntries, script, sizeof(totalEntries));

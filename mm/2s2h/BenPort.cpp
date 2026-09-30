@@ -1611,3 +1611,8 @@ extern "C" int Controller_ShouldRumble(size_t slot) {
 
     return 0;
 }
+
+extern "C" void OTR_ShowNotification(const char* message) {
+    Ship::Context::GetInstance()->GetWindow()->GetGui()->GetGameOverlay()->TextDrawNotification(
+        8.0f, true, message);
+}

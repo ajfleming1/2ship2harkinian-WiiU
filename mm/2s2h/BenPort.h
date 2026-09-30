@@ -141,6 +141,7 @@ int32_t GetGIID(uint32_t itemID);
 #ifdef __cplusplus
 extern "C" {
 #endif
+void OTR_ShowNotification(const char* message);
 uint64_t GetUnixTimestamp();
 #ifdef __cplusplus
 };
