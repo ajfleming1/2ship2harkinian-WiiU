@@ -90,6 +90,10 @@ void Play_DrawMotionBlur(PlayState* this) {
     MotionBlur_Override(&sMotionBlurStatus, &alpha);
 
     if (sMotionBlurStatus != MOTION_BLUR_OFF) {
+#ifdef __WIIU__
+        // Skip motion blur on Wii U - framebuffer copy/blit operations hang the GX2 GPU
+        sMotionBlurStatus = MOTION_BLUR_OFF;
+#else
         OPEN_DISPS(gfxCtx);
 
         gfxHead = POLY_OPA_DISP;
@@ -129,6 +133,7 @@ void Play_DrawMotionBlur(PlayState* this) {
         POLY_OPA_DISP = gfx;
 
         CLOSE_DISPS(gfxCtx);
+#endif
     }
 }
 
@@ -1150,6 +1155,7 @@ void Play_PostWorldDraw(PlayState* this) {
     }
 
     // Shrink the whole screen display (at the end of First and Second Day by default)
+#ifndef __WIIU__
     if (gSaveContext.screenScaleFlag) {
         Gfx* nextOpa;
         Gfx* opa;
@@ -1171,6 +1177,7 @@ void Play_PostWorldDraw(PlayState* this) {
 
         CLOSE_DISPS(gfxCtx);
     }
+#endif
 }
 
 void Play_DrawMain(PlayState* this) {

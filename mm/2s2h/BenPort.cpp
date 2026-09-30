@@ -1130,9 +1130,11 @@ extern "C" Vtx* ResourceMgr_LoadVtxByName(char* path) {
 }
 
 extern "C" SequenceData ResourceMgr_LoadSeqByName(const char* path) {
+    SequenceData emptySeq = {0};
+    if (path == nullptr) return emptySeq;
+
     SequenceData* sequence = (SequenceData*)ResourceGetDataByName(path);
     if (sequence == nullptr) {
-        SequenceData emptySeq = {0};
         return emptySeq;
     }
     return *sequence;
@@ -1208,6 +1210,7 @@ extern "C" SoundFontSample* ResourceMgr_LoadAudioSample(const char* path) {
 #endif
 
 extern "C" SoundFont* ResourceMgr_LoadAudioSoundFont(const char* path) {
+    if (path == nullptr) return nullptr;
     return (SoundFont*)ResourceGetDataByName(path);
 }
 extern "C" int ResourceMgr_OTRSigCheck(char* imgData) {

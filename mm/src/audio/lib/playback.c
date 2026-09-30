@@ -368,6 +368,9 @@ Instrument* AudioPlayback_GetInstrumentInner(s32 fontId, s32 instId) {
 
     int instCnt = 0;
     SoundFont* sf = ResourceMgr_LoadAudioSoundFont(gFontToResource[fontId]);
+    if (sf == NULL) {
+        return NULL;
+    }
 
     if (instId >= sf->numInstruments)
         return NULL;
@@ -395,6 +398,9 @@ Drum* AudioPlayback_GetDrum(s32 fontId, s32 drumId) {
     }
 
     SoundFont* sf = ResourceMgr_LoadAudioSoundFont(gFontToResource[fontId]);
+    if (sf == NULL) {
+        return NULL;
+    }
     if (drumId < sf->numDrums) {
         drum = sf->drums[drumId];
     }
