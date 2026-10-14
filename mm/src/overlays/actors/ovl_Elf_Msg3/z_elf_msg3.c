@@ -113,17 +113,6 @@ void func_80A2CF7C(ElfMsg3* this, PlayState* play) {
               ((player->actor.world.pos.y - this->actor.world.pos.y) < (100.0f * this->actor.scale.y))) &&
              (fabsf(player->actor.world.pos.z - this->actor.world.pos.z) < (100.0f * this->actor.scale.z))),
             this)) {
-
-#ifdef __WIIU__
-        // 2S2H [Wii U Port Hack]
-        // The Skull Kid backstory cutscene triggered by this Tatl tree interaction causes a hard GX2 GPU freeze.
-        // We gracefully kill the trigger natively so the player can just walk past.
-        if (play->sceneId == SCENE_24KEMONOMITI) {
-            Actor_Kill(&this->actor);
-            return;
-        }
-#endif
-
         player->tatlTextId = func_80A2CF50(this);
         CutsceneManager_Queue(CS_ID_GLOBAL_TALK);
         tatl->elfMsg = &this->actor;
