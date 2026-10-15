@@ -20,6 +20,9 @@
 #else
 #include <time.h>
 #endif
+#ifdef __WIIU__
+#include <coreinit/memorymap.h>
+#endif
 #include <AudioPlayer.h>
 #include "variables.h"
 #include "z64.h"
@@ -879,6 +882,9 @@ extern "C" char** ResourceMgr_ListFiles(const char* searchMask, int* resultSize)
 }
 
 extern "C" uint8_t ResourceMgr_FileExists(const char* filePath) {
+    if (filePath == nullptr || filePath[0] == '\0') {
+        return false;
+    }
     std::string path = filePath;
     if (path.substr(0, 7) == "__OTR__") {
         path = path.substr(7);
@@ -888,10 +894,16 @@ extern "C" uint8_t ResourceMgr_FileExists(const char* filePath) {
 }
 
 extern "C" void ResourceMgr_LoadFile(const char* resName) {
+    if (resName == nullptr || resName[0] == '\0') {
+        return;
+    }
     Ship::Context::GetInstance()->GetResourceManager()->LoadResource(resName);
 }
 
 std::shared_ptr<Ship::IResource> GetResourceByName(const char* path) {
+    if (path == nullptr || path[0] == '\0') {
+        return nullptr;
+    }
     return Ship::Context::GetInstance()->GetResourceManager()->LoadResource(path);
 }
 
@@ -910,7 +922,13 @@ extern "C" char* ResourceMgr_LoadFileFromDisk(const char* filePath) {
 }
 
 extern "C" uint8_t ResourceMgr_ResourceIsBackground(char* texPath) {
+    if (texPath == nullptr || texPath[0] == '\0') {
+        return false;
+    }
     auto res = GetResourceByName(texPath);
+    if (res == nullptr || res->GetInitData() == nullptr) {
+        return false;
+    }
     return res->GetInitData()->Type == static_cast<uint32_t>(SOH::ResourceType::SOH_Background);
 }
 
@@ -981,7 +999,13 @@ extern "C" char* ResourceMgr_LoadIfDListByName(const char* filePath) {
 // }
 
 extern "C" char* ResourceMgr_LoadPlayerAnimByName(const char* animPath) {
+    if (animPath == nullptr) {
+        return nullptr;
+    }
     auto anim = std::static_pointer_cast<SOH::PlayerAnimation>(GetResourceByName(animPath));
+    if (anim == nullptr) {
+        return nullptr;
+    }
 
     return (char*)&anim->limbRotData[0];
 }
@@ -991,7 +1015,13 @@ extern "C" void ResourceMgr_PushCurrentDirectory(char* path) {
 }
 
 extern "C" Gfx* ResourceMgr_LoadGfxByName(const char* path) {
+    if (path == nullptr) {
+        return nullptr;
+    }
     auto res = std::static_pointer_cast<LUS::DisplayList>(GetResourceByName(path));
+    if (res == nullptr) {
+        return nullptr;
+    }
     return (Gfx*)&res->Instructions[0];
 }
 
@@ -1005,8 +1035,14 @@ std::unordered_map<std::string, std::unordered_map<std::string, GfxPatch>> origi
 // Attention! This is primarily for cosmetics & bug fixes. For things like mods and model replacement you should be
 // using OTRs instead (When that is available). Index can be found using the commented out section below.
 extern "C" void ResourceMgr_PatchGfxByName(const char* path, const char* patchName, int index, Gfx instruction) {
+    if (path == nullptr || patchName == nullptr) {
+        return;
+    }
     auto res = std::static_pointer_cast<LUS::DisplayList>(
         Ship::Context::GetInstance()->GetResourceManager()->LoadResource(path));
+    if (res == nullptr) {
+        return;
+    }
 
     // Leaving this here for people attempting to find the correct Dlist index to patch
     /*if (strcmp("__OTR__objects/object_gi_longsword/gGiBiggoronSwordDL", path) == 0) {
@@ -1043,8 +1079,14 @@ extern "C" void ResourceMgr_PatchGfxByName(const char* path, const char* patchNa
 
 extern "C" void ResourceMgr_PatchGfxCopyCommandByName(const char* path, const char* patchName, int destinationIndex,
                                                       int sourceIndex) {
+    if (path == nullptr || patchName == nullptr) {
+        return;
+    }
     auto res = std::static_pointer_cast<LUS::DisplayList>(
         Ship::Context::GetInstance()->GetResourceManager()->LoadResource(path));
+    if (res == nullptr) {
+        return;
+    }
 
     // Do not patch custom assets as they most likely do not have the same instructions as authentic assets
     if (res->GetInitData()->IsCustom) {
@@ -1062,9 +1104,15 @@ extern "C" void ResourceMgr_PatchGfxCopyCommandByName(const char* path, const ch
 }
 
 extern "C" void ResourceMgr_UnpatchGfxByName(const char* path, const char* patchName) {
+    if (path == nullptr || patchName == nullptr) {
+        return;
+    }
     if (originalGfx.contains(path) && originalGfx[path].contains(patchName)) {
         auto res = std::static_pointer_cast<LUS::DisplayList>(
             Ship::Context::GetInstance()->GetResourceManager()->LoadResource(path));
+        if (res == nullptr) {
+            return;
+        }
 
         Gfx* gfx = (Gfx*)&res->Instructions[originalGfx[path][patchName].index];
         *gfx = originalGfx[path][patchName].instruction;
@@ -1074,30 +1122,60 @@ extern "C" void ResourceMgr_UnpatchGfxByName(const char* path, const char* patch
 }
 
 extern "C" char* ResourceMgr_LoadVtxArrayByName(const char* path) {
+    if (path == nullptr) {
+        return nullptr;
+    }
     auto res = std::static_pointer_cast<SOH::Array>(GetResourceByName(path));
+    if (res == nullptr) {
+        return nullptr;
+    }
 
     return (char*)res->Vertices.data();
 }
 
 extern "C" size_t ResourceMgr_GetVtxArraySizeByName(const char* path) {
+    if (path == nullptr) {
+        return 0;
+    }
     auto res = std::static_pointer_cast<SOH::Array>(GetResourceByName(path));
+    if (res == nullptr) {
+        return 0;
+    }
 
     return res->Vertices.size();
 }
 
 extern "C" char* ResourceMgr_LoadArrayByName(const char* path) {
+    if (path == nullptr) {
+        return nullptr;
+    }
     auto res = std::static_pointer_cast<SOH::Array>(GetResourceByName(path));
+    if (res == nullptr) {
+        return nullptr;
+    }
 
     return (char*)res->Scalars.data();
 }
 
 extern "C" size_t ResourceMgr_GetArraySizeByName(const char* path) {
+    if (path == nullptr) {
+        return 0;
+    }
     auto res = std::static_pointer_cast<SOH::Array>(GetResourceByName(path));
+    if (res == nullptr) {
+        return 0;
+    }
 
     return res->Scalars.size();
 }
 extern "C" char* ResourceMgr_LoadArrayByNameAsVec3s(const char* path) {
+    if (path == nullptr) {
+        return nullptr;
+    }
     auto res = std::static_pointer_cast<SOH::Array>(GetResourceByName(path));
+    if (res == nullptr) {
+        return nullptr;
+    }
 
     // if (res->CachedGameAsset != nullptr)
     //     return (char*)res->CachedGameAsset;
@@ -1118,14 +1196,23 @@ extern "C" char* ResourceMgr_LoadArrayByNameAsVec3s(const char* path) {
 }
 
 extern "C" AnimatedMaterial* ResourceMgr_LoadAnimatedMatByName(const char* path) {
+    if (path == nullptr) {
+        return nullptr;
+    }
     return (AnimatedMaterial*)ResourceGetDataByName(path);
 }
 
 extern "C" CollisionHeader* ResourceMgr_LoadColByName(const char* path) {
+    if (path == nullptr) {
+        return nullptr;
+    }
     return (CollisionHeader*)ResourceGetDataByName(path);
 }
 
 extern "C" Vtx* ResourceMgr_LoadVtxByName(char* path) {
+    if (path == nullptr) {
+        return nullptr;
+    }
     return (Vtx*)ResourceGetDataByName(path);
 }
 
@@ -1140,10 +1227,16 @@ extern "C" SequenceData ResourceMgr_LoadSeqByName(const char* path) {
     return *sequence;
 }
 extern "C" KeyFrameSkeleton* ResourceMgr_LoadKeyFrameSkelByName(const char* path) {
+    if (path == nullptr) {
+        return nullptr;
+    }
     return (KeyFrameSkeleton*)ResourceGetDataByName(path);
 }
 
 extern "C" KeyFrameAnimation* ResourceMgr_LoadKeyFrameAnimByName(const char* path) {
+    if (path == nullptr) {
+        return nullptr;
+    }
     return (KeyFrameAnimation*)ResourceGetDataByName(path);
 }
 // std::map<std::string, SoundFontSample*> cachedCustomSFs;
@@ -1216,25 +1309,32 @@ extern "C" SoundFont* ResourceMgr_LoadAudioSoundFont(const char* path) {
 extern "C" int ResourceMgr_OTRSigCheck(char* imgData) {
     uintptr_t i = (uintptr_t)(imgData);
 
-    // if (i == 0xD9000000 || i == 0xE7000000 || (i & 1) == 1)
-    if ((i & 1) == 1)
+    if ((i & 1) == 1 || i == 0)
         return 0;
 
-    // if ((i & 0xFF000000) != 0xAB000000 && (i & 0xFF000000) != 0xCD000000 && i != 0) {
-    if (i != 0) {
-        if (imgData[0] == '_' && imgData[1] == '_' && imgData[2] == 'O' && imgData[3] == 'T' && imgData[4] == 'R' &&
-            imgData[5] == '_' && imgData[6] == '_')
-            return 1;
-    }
+#ifdef __WIIU__
+    if (!OSIsAddressValid(i))
+        return 0;
+#endif
+
+    if (imgData[0] == '_' && imgData[1] == '_' && imgData[2] == 'O' && imgData[3] == 'T' && imgData[4] == 'R' &&
+        imgData[5] == '_' && imgData[6] == '_')
+        return 1;
 
     return 0;
 }
 
 extern "C" AnimationHeaderCommon* ResourceMgr_LoadAnimByName(const char* path) {
+    if (path == nullptr || path[0] == '\0') {
+        return nullptr;
+    }
     return (AnimationHeaderCommon*)ResourceGetDataByName(path);
 }
 
 extern "C" SkeletonHeader* ResourceMgr_LoadSkeletonByName(const char* path, SkelAnime* skelAnime) {
+    if (path == nullptr || path[0] == '\0') {
+        return nullptr;
+    }
     std::string pathStr = std::string(path);
     static const std::string sOtr = "__OTR__";
 
@@ -1276,6 +1376,9 @@ extern "C" void ResourceMgr_ClearSkeletons(SkelAnime* skelAnime) {
 }
 
 extern "C" s32* ResourceMgr_LoadCSByName(const char* path) {
+    if (path == nullptr || path[0] == '\0') {
+        return nullptr;
+    }
     return (s32*)ResourceGetDataByName(path);
 }
 

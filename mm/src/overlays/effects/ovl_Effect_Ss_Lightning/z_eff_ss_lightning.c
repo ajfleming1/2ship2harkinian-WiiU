@@ -26,7 +26,7 @@ u32 EffectSsLightning_Init(PlayState* play, u32 index, EffectSs* this, void* ini
 void EffectSsLightning_Update(PlayState* play, u32 index, EffectSs* this);
 void EffectSsLightning_Draw(PlayState* play, u32 index, EffectSs* this);
 
-static TexturePtr sLightningTextures[] = {
+static const TexturePtr sLightningTextures[] = {
     gEffLightning1Tex, gEffLightning2Tex, gEffLightning3Tex, gEffLightning4Tex,
     gEffLightning5Tex, gEffLightning6Tex, gEffLightning7Tex, gEffLightning8Tex,
 };
@@ -35,8 +35,6 @@ EffectSsInit Effect_Ss_Lightning_InitVars = {
     EFFECT_SS_LIGHTNING,
     EffectSsLightning_Init,
 };
-
-static s32 sIsDesegmented = false;
 
 u32 EffectSsLightning_Init(PlayState* play, u32 index, EffectSs* this, void* initParamsx) {
     EffectSsLightningInitParams* initParams = PARAMS;
@@ -59,13 +57,6 @@ u32 EffectSsLightning_Init(PlayState* play, u32 index, EffectSs* this, void* ini
     this->rScale = initParams->scale;
     this->rYaw = initParams->yaw;
     this->rLifespan = initParams->life;
-
-    if (!sIsDesegmented) {
-        for (i = 0; i < ARRAY_COUNT(sLightningTextures); i++) {
-            sLightningTextures[i] = Lib_SegmentedToVirtual(sLightningTextures[i]);
-        }
-        sIsDesegmented = true;
-    }
 
     return 1;
 }
@@ -120,7 +111,7 @@ void EffectSsLightning_Draw(PlayState* play, u32 index, EffectSs* this) {
     if (mtx != NULL) {
         gSPMatrix(POLY_XLU_DISP++, mtx, G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
         Gfx_SetupDL61_Xlu(gfxCtx);
-        gSPSegment(POLY_XLU_DISP++, 0x08, sLightningTextures[texIndex]);
+        gSPSegment(POLY_XLU_DISP++, 0x08, Lib_SegmentedToVirtual(sLightningTextures[texIndex]));
         gDPSetPrimColor(POLY_XLU_DISP++, 0, 0, this->rPrimColorR, this->rPrimColorG, this->rPrimColorB,
                         this->rPrimColorA);
         gDPSetEnvColor(POLY_XLU_DISP++, this->rEnvColorR, this->rEnvColorG, this->rEnvColorB, this->rEnvColorA);

@@ -4048,12 +4048,20 @@ u16 BgCheck_GetBgCamSettingImpl(CollisionContext* colCtx, u32 bgCamIndex, s32 bg
     CollisionHeader* colHeader;
     BgCamInfo* bgCamList;
 
+    if ((s32)bgCamIndex < 0) {
+        return CAM_SET_NONE;
+    }
+
     colHeader = BgCheck_GetCollisionHeader(colCtx, bgId);
     if (colHeader == NULL) {
         return CAM_SET_NONE;
     }
 
     bgCamList = colHeader->bgCamList;
+    if (bgCamList == NULL) {
+        return CAM_SET_NONE;
+    }
+
     camSetting = bgCamList[bgCamIndex].setting;
 
     return camSetting;
@@ -4088,9 +4096,14 @@ u16 BgCheck_GetBgCamSetting(CollisionContext* colCtx, CollisionPoly* poly, s32 b
  * BgCam Get the total count of Vec3s data from bgCamFuncData
  */
 u16 BgCheck_GetBgCamCountImpl(CollisionContext* colCtx, u32 bgCamIndex, s32 bgId) {
-    CollisionHeader* colHeader = BgCheck_GetCollisionHeader(colCtx, bgId);
+    CollisionHeader* colHeader;
     BgCamInfo* bgCamList;
 
+    if ((s32)bgCamIndex < 0) {
+        return 0;
+    }
+
+    colHeader = BgCheck_GetCollisionHeader(colCtx, bgId);
     if (colHeader == NULL) {
         return 0;
     }
@@ -4132,9 +4145,14 @@ u16 BgCheck_GetBgCamCount(CollisionContext* colCtx, CollisionPoly* poly, s32 bgI
  * BgCam Get Vec3s data from bgCamFuncData
  */
 Vec3s* BgCheck_GetBgCamFuncDataImpl(CollisionContext* colCtx, s32 bgCamIndex, s32 bgId) {
-    CollisionHeader* colHeader = BgCheck_GetCollisionHeader(colCtx, bgId);
+    CollisionHeader* colHeader;
     BgCamInfo* bgCamList;
 
+    if (bgCamIndex < 0) {
+        return NULL;
+    }
+
+    colHeader = BgCheck_GetCollisionHeader(colCtx, bgId);
     if (colHeader == NULL) {
         return NULL;
     }

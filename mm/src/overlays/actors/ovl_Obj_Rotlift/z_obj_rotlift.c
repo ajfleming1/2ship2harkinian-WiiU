@@ -37,7 +37,7 @@ ActorInit Obj_Rotlift_InitVars = {
     /**/ ObjRotlift_Draw,
 };
 
-struct ObjRotliftModelInfo sModelInfo[] = {
+static const ObjRotliftModelInfo sModelInfo[] = {
     {
         gDekuMoonDungeonRotatingPlatformsDL,
         gDekuMoonDungeonRotatingPlatformsUnusedTexAnim,
@@ -87,7 +87,7 @@ void ObjRotlift_Init(Actor* thisx, PlayState* play2) {
     s32 type = OBJROTLIFT_GET_TYPE(&this->dyna.actor);
     s32 dekuFlowerParams;
     s32 i;
-    ObjRotliftModelInfo* modelInfo;
+    const ObjRotliftModelInfo* modelInfo;
     ObjEtcetera** dekuFlowers;
 
     Actor_ProcessInitChain(&this->dyna.actor, sInitChain);
@@ -115,7 +115,6 @@ void ObjRotlift_Init(Actor* thisx, PlayState* play2) {
 
     modelInfo = &sModelInfo[type];
     DynaPolyActor_LoadMesh(play, &this->dyna, modelInfo->colHeader);
-    modelInfo->animMat = Lib_SegmentedToVirtual(modelInfo->animMat);
 }
 
 void ObjRotlift_Destroy(Actor* thisx, PlayState* play) {
@@ -146,9 +145,9 @@ void ObjRotlift_Update(Actor* thisx, PlayState* play) {
 void ObjRotlift_Draw(Actor* thisx, PlayState* play) {
     s32 pad;
     ObjRotlift* this = THIS;
-    ObjRotliftModelInfo* modelInfo = &sModelInfo[OBJROTLIFT_GET_TYPE(&this->dyna.actor)];
+    const ObjRotliftModelInfo* modelInfo = &sModelInfo[OBJROTLIFT_GET_TYPE(&this->dyna.actor)];
 
     // Neither of the displaylists reference other segments, so this call is ultimately pointless.
-    AnimatedMat_Draw(play, modelInfo->animMat);
+    AnimatedMat_Draw(play, Lib_SegmentedToVirtual(modelInfo->animMat));
     Gfx_DrawDListOpa(play, modelInfo->dList);
 }

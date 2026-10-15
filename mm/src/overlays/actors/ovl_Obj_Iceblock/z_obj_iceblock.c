@@ -77,8 +77,6 @@ static ColliderCylinderInit sCylinderInit = {
     { 44, 62, -31, { 0, 0, 0 } },
 };
 
-static AnimatedMaterial* sCubeSublimatingAirTexMat = NULL;
-
 s16 func_80A23090(s16 arg0, s16 arg1, s16 arg2) {
     if (arg0 >= 0) {
         if (arg2 < arg0) {
@@ -933,10 +931,6 @@ void ObjIceblock_Init(Actor* thisx, PlayState* play) {
         this->collider.dim.radius = 29;
     }
 
-    if (sCubeSublimatingAirTexMat == NULL) {
-        sCubeSublimatingAirTexMat = Lib_SegmentedToVirtual(gIceBlockCubeSublimatingAirTexAnim);
-    }
-
     // ... this is init, why would this value be set?
     if (!(this->unk_1B0 & 8)) {
         parent = this->dyna.actor.parent;
@@ -1558,7 +1552,7 @@ void func_80A26BF8(ObjIceblock* this, PlayState* play) {
 void ObjIceblock_Draw(Actor* thisx, PlayState* play) {
     ObjIceblock* this = THIS;
 
-    AnimatedMat_Draw(play, sCubeSublimatingAirTexMat);
+    AnimatedMat_Draw(play, Lib_SegmentedToVirtual(gIceBlockCubeSublimatingAirTexAnim));
     this->extendedDrawFunc(this, play);
     func_80A24AA8(this, play);
 }

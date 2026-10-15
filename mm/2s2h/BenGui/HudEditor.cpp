@@ -30,7 +30,9 @@ HudEditorElement hudEditorElements[HUD_EDITOR_ELEMENT_MAX] = {
 };
 
 extern "C" bool HudEditor_ShouldOverrideDraw() {
-    return hudEditorActiveElement != HUD_EDITOR_ELEMENT_NONE &&
+    return hudEditorActiveElement >= 0 &&
+           hudEditorActiveElement < HUD_EDITOR_ELEMENT_MAX &&
+           hudEditorElements[hudEditorActiveElement].modeCvar != nullptr &&
            CVarGetInteger(hudEditorElements[hudEditorActiveElement].modeCvar, HUD_EDITOR_ELEMENT_MODE_VANILLA) !=
                HUD_EDITOR_ELEMENT_MODE_VANILLA;
 }
@@ -40,19 +42,26 @@ extern "C" void HudEditor_SetActiveElement(HudEditorElementID id) {
 }
 
 extern "C" bool HudEditor_IsActiveElementHidden() {
-    return hudEditorActiveElement != HUD_EDITOR_ELEMENT_NONE
+    return (hudEditorActiveElement >= 0 &&
+            hudEditorActiveElement < HUD_EDITOR_ELEMENT_MAX &&
+            hudEditorElements[hudEditorActiveElement].modeCvar != nullptr)
                ? CVarGetInteger(hudEditorElements[hudEditorActiveElement].modeCvar, HUD_EDITOR_ELEMENT_MODE_VANILLA) ==
                      HUD_EDITOR_ELEMENT_MODE_HIDDEN
                : false;
 }
 
 extern "C" f32 HudEditor_GetActiveElementScale() {
-    return hudEditorActiveElement != HUD_EDITOR_ELEMENT_NONE
+    return (hudEditorActiveElement >= 0 &&
+            hudEditorActiveElement < HUD_EDITOR_ELEMENT_MAX &&
+            hudEditorElements[hudEditorActiveElement].scaleCvar != nullptr)
                ? CVarGetFloat(hudEditorElements[hudEditorActiveElement].scaleCvar, 1.0f)
                : 1.0f;
 }
 
 extern "C" void HudEditor_ModifyRectPosValuesFromBase(s16 baseX, s16 baseY, s16* rectLeft, s16* rectTop) {
+    if (hudEditorActiveElement < 0 || hudEditorActiveElement >= HUD_EDITOR_ELEMENT_MAX) {
+        return;
+    }
     s16 offsetFromBaseX = *rectLeft - baseX;
     s16 offsetFromBaseY = *rectTop - baseY;
     *rectLeft = baseX + (offsetFromBaseX * CVarGetFloat(hudEditorElements[hudEditorActiveElement].scaleCvar, 1.0f));
@@ -60,6 +69,9 @@ extern "C" void HudEditor_ModifyRectPosValuesFromBase(s16 baseX, s16 baseY, s16*
 }
 
 void HudEditor_ModifyRectPosValuesFloat(f32* rectLeft, f32* rectTop) {
+    if (hudEditorActiveElement < 0 || hudEditorActiveElement >= HUD_EDITOR_ELEMENT_MAX) {
+        return;
+    }
     f32 offsetFromBaseX = *rectLeft - hudEditorElements[hudEditorActiveElement].defaultX;
     f32 offsetFromBaseY = *rectTop - hudEditorElements[hudEditorActiveElement].defaultY;
     *rectLeft = CVarGetInteger(hudEditorElements[hudEditorActiveElement].xCvar,
@@ -89,13 +101,22 @@ extern "C" void HudEditor_ModifyRectPosValues(s16* rectLeft, s16* rectTop) {
 }
 
 extern "C" void HudEditor_ModifyRectSizeValues(s16* rectWidth, s16* rectHeight) {
+    if (hudEditorActiveElement < 0 || hudEditorActiveElement >= HUD_EDITOR_ELEMENT_MAX) {
+        return;
+    }
     *rectWidth *= CVarGetFloat(hudEditorElements[hudEditorActiveElement].scaleCvar, 1.0f);
     *rectHeight *= CVarGetFloat(hudEditorElements[hudEditorActiveElement].scaleCvar, 1.0f);
 }
 
 extern "C" void HudEditor_ModifyTextureStepValues(s16* dsdx, s16* dtdy) {
-    *dsdx /= CVarGetFloat(hudEditorElements[hudEditorActiveElement].scaleCvar, 1.0f);
-    *dtdy /= CVarGetFloat(hudEditorElements[hudEditorActiveElement].scaleCvar, 1.0f);
+    if (hudEditorActiveElement < 0 || hudEditorActiveElement >= HUD_EDITOR_ELEMENT_MAX) {
+        return;
+    }
+    float scale = CVarGetFloat(hudEditorElements[hudEditorActiveElement].scaleCvar, 1.0f);
+    if (scale != 0.0f) {
+        *dsdx /= scale;
+        *dtdy /= scale;
+    }
 }
 
 // Modify matrix values based on the identity matrix (0,0) centered on the screen

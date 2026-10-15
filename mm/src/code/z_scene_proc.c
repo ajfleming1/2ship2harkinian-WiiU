@@ -395,21 +395,36 @@ void AnimatedMat_DrawMain(PlayState* play, AnimatedMaterial* matAnim, f32 alphaR
     };
     s32 segmentAbs;
     s32 segment;
-    if (ResourceMgr_OTRSigCheck(matAnim) != 0)
+    if (matAnim == NULL) {
+        return;
+    }
+    if (ResourceMgr_OTRSigCheck(matAnim) != 0) {
         matAnim = ResourceMgr_LoadAnimByName(matAnim);
+    }
+
+    if ((matAnim == NULL) || (matAnim->segment == 0)) {
+        return;
+    }
 
     sMatAnimAlphaRatio = alphaRatio;
     sMatAnimStep = step;
     sMatAnimFlags = flags;
 
-    if ((matAnim != NULL) && (matAnim->segment != 0)) {
-        do {
-            segment = matAnim->segment;
-            segmentAbs = ABS_ALT(segment) + 7;
+    s32 maxIterations = 64;
+    do {
+        segment = matAnim->segment;
+        segmentAbs = ABS_ALT(segment) + 7;
+        if (matAnim->params != NULL && (u32)matAnim->type < ARRAY_COUNT(matAnimDrawHandlers) &&
+            matAnimDrawHandlers[matAnim->type] != NULL) {
             matAnimDrawHandlers[matAnim->type](play, segmentAbs, Lib_SegmentedToVirtual(matAnim->params));
-            matAnim++;
-        } while (segment >= 0);
-    }
+        } else {
+            break;
+        }
+        matAnim++;
+        if (--maxIterations <= 0) {
+            break;
+        }
+    } while (segment >= 0);
 }
 
 /**

@@ -1328,7 +1328,11 @@ void Message_DrawTextDefault(PlayState* play, Gfx** gfxP) {
                 // fallthrough
             case 0xC:
                 sp130++;
-                msgCtx->textPosX = msgCtx->unk11F1A[sp130] + msgCtx->unk11FF8;
+                if (sp130 < ARRAY_COUNT(msgCtx->unk11F1A)) {
+                    msgCtx->textPosX = msgCtx->unk11F1A[sp130] + msgCtx->unk11FF8;
+                } else {
+                    msgCtx->textPosX = msgCtx->unk11FF8;
+                }
                 if (msgCtx->choiceNum == 1) {
                     if (!play->pauseCtx.bombersNotebookOpen) {
                         msgCtx->textPosX += 32;
@@ -2374,9 +2378,11 @@ void Message_Decode(PlayState* play) {
                 msgCtx->msgMode = MSGMODE_TEXT_DISPLAYING;
                 msgCtx->textDrawPos = 1;
                 msgCtx->unk11FFA = msgCtx->textboxY + 6;
-                msgCtx->unk11F1A[spD2] = 0;
-                if (msgCtx->unk11F18 == 0) {
-                    msgCtx->unk11F1A[spD2] = (s16)((msgCtx->textCharScale * 16.0f * 16.0f) - spC0) / 2;
+                if (spD2 < ARRAY_COUNT(msgCtx->unk11F1A)) {
+                    msgCtx->unk11F1A[spD2] = 0;
+                    if (msgCtx->unk11F18 == 0) {
+                        msgCtx->unk11F1A[spD2] = (s16)((msgCtx->textCharScale * 16.0f * 16.0f) - spC0) / 2;
+                    }
                 }
                 spC0 = 0.0f;
                 if (curChar == 0xB) {
@@ -3160,9 +3166,11 @@ void Message_Decode(PlayState* play) {
                 }
                 msgCtx->msgBufPos++;
             } else if ((curChar == 0xC) || (curChar == 0xA)) {
-                msgCtx->unk11F1A[spD2] = 0;
-                if (msgCtx->unk11F18 == 0) {
-                    msgCtx->unk11F1A[spD2] = ((msgCtx->textCharScale * 16.0f * 16.0f) - spC0) * 0.5f;
+                if (spD2 < ARRAY_COUNT(msgCtx->unk11F1A)) {
+                    msgCtx->unk11F1A[spD2] = 0;
+                    if (msgCtx->unk11F18 == 0) {
+                        msgCtx->unk11F1A[spD2] = ((msgCtx->textCharScale * 16.0f * 16.0f) - spC0) * 0.5f;
+                    }
                 }
                 spD2++;
                 spC0 = 0.0f;
@@ -3361,8 +3369,12 @@ void Message_OpenText(PlayState* play, u16 textId) {
     if (msgCtx->textIsCredits) {
         Message_FindCreditsMessage(play, textId);
         MessageTableEntry* msgEntry = (MessageTableEntry*)font->messageStart;
-        msgCtx->msgLength = msgEntry->msgSize;
-        memcpy(&font->msgBuf, msgEntry->segment, msgEntry->msgSize);
+        if (msgEntry != NULL && msgEntry->segment != NULL) {
+            msgCtx->msgLength = msgEntry->msgSize;
+            memcpy(&font->msgBuf, msgEntry->segment, msgEntry->msgSize);
+        } else {
+            msgCtx->msgLength = 0;
+        }
         // DmaMgr_SendRequest0(&font->msgBuf, SEGMENT_ROM_START(staff_message_data_static) + font->messageStart,
         //                     font->messageEnd);
     } else if (gSaveContext.options.language == LANGUAGE_JPN) {
@@ -3373,8 +3385,12 @@ void Message_OpenText(PlayState* play, u16 textId) {
     } else {
         Message_FindMessageNES(play, textId);
         MessageTableEntry* msgEntry = (MessageTableEntry*)font->messageStart;
-        msgCtx->msgLength = msgEntry->msgSize;
-        memcpy(&font->msgBuf, msgEntry->segment, msgEntry->msgSize);
+        if (msgEntry != NULL && msgEntry->segment != NULL) {
+            msgCtx->msgLength = msgEntry->msgSize;
+            memcpy(&font->msgBuf, msgEntry->segment, msgEntry->msgSize);
+        } else {
+            msgCtx->msgLength = 0;
+        }
         // msgCtx->msgLength = font->messageEnd;
         // DmaMgr_SendRequest0(&font->msgBuf, SEGMENT_ROM_START(message_data_static) + font->messageStart,
         //                     font->messageEnd);
@@ -3473,8 +3489,12 @@ void func_801514B0(PlayState* play, u16 arg1, u8 arg2) {
     } else {
         Message_FindMessageNES(play, arg1);
         MessageTableEntry* msgEntry = (MessageTableEntry*)font->messageStart;
-        msgCtx->msgLength = msgEntry->msgSize;
-        memcpy(&font->msgBuf, msgEntry->segment, msgEntry->msgSize);
+        if (msgEntry != NULL && msgEntry->segment != NULL) {
+            msgCtx->msgLength = msgEntry->msgSize;
+            memcpy(&font->msgBuf, msgEntry->segment, msgEntry->msgSize);
+        } else {
+            msgCtx->msgLength = 0;
+        }
         // msgCtx->msgLength = font->messageEnd;
         //  BENTODO
         // DmaMgr_SendRequest0(&font->msgBuf, SEGMENT_ROM_START(message_data_static) + font->messageStart,
@@ -5184,6 +5204,10 @@ void Message_DrawMain(PlayState* play, Gfx** gfxP) {
                 break;
 
             case MSGMODE_TEXT_DONE:
+                temp_v0_33 = msgCtx->unk120BE;
+                if (temp_v0_33 >= ARRAY_COUNT(msgCtx->unk11F1A)) {
+                    temp_v0_33 = ARRAY_COUNT(msgCtx->unk11F1A) - 1;
+                }
                 switch (msgCtx->textboxEndType) {
                     case TEXTBOX_ENDTYPE_60:
                         temp_v0_33 = msgCtx->unk120BE;

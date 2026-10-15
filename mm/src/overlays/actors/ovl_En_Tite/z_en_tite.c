@@ -116,7 +116,7 @@ static DamageTable sDamageTable = {
 
 static CollisionCheckInfoInit sColChkInfoInit = { 2, 40, 40, MASS_HEAVY };
 
-static TexturePtr D_80896B24[2][3] = {
+static const TexturePtr D_80896B24[2][3] = {
     { object_tite_Tex_001300, object_tite_Tex_001700, object_tite_Tex_001900 },
     { object_tite_Tex_001B00, object_tite_Tex_001F00, object_tite_Tex_002100 },
 };
@@ -132,7 +132,6 @@ static InitChainEntry sInitChain[] = {
     ICHAIN_F32_DIV1000(gravity, -1000, ICHAIN_STOP),
 };
 
-static s32 D_80896B60 = 0;
 static Vec3f D_80896B64 = { 0.0f, 0.3f, 0.0f };
 
 void EnTite_Init(Actor* thisx, PlayState* play) {
@@ -150,15 +149,6 @@ void EnTite_Init(Actor* thisx, PlayState* play) {
     this->collider.dim.worldSphere.radius = sSphereInit.dim.modelSphere.radius;
     this->updBgCheckInfoFlags =
         UPDBGCHECKINFO_FLAG_1 | UPDBGCHECKINFO_FLAG_4 | UPDBGCHECKINFO_FLAG_8 | UPDBGCHECKINFO_FLAG_10;
-
-    if (!D_80896B60) {
-        for (i = 0; i < ARRAY_COUNT(D_80896B24); i++) {
-            for (j = 0; j < ARRAY_COUNT(D_80896B24[0]); j++) {
-                D_80896B24[i][j] = Lib_SegmentedToVirtual(D_80896B24[i][j]);
-            }
-        }
-        D_80896B60 = true;
-    }
 
     if (this->actor.params == ENTITE_MINUS_3) {
         this->actor.params = ENTITE_MINUS_2;
@@ -1218,13 +1208,13 @@ void EnTite_Draw(Actor* thisx, PlayState* play) {
     gSPDisplayList(&gfx[0], gSetupDLs[SETUPDL_25]);
 
     if (this->actor.params == ENTITE_MINUS_2) {
-        gSPSegment(&gfx[1], 0x08, D_80896B24[0][0]);
-        gSPSegment(&gfx[2], 0x09, D_80896B24[0][1]);
-        gSPSegment(&gfx[3], 0x0A, D_80896B24[0][2]);
+        gSPSegment(&gfx[1], 0x08, Lib_SegmentedToVirtual(D_80896B24[0][0]));
+        gSPSegment(&gfx[2], 0x09, Lib_SegmentedToVirtual(D_80896B24[0][1]));
+        gSPSegment(&gfx[3], 0x0A, Lib_SegmentedToVirtual(D_80896B24[0][2]));
     } else {
-        gSPSegment(&gfx[1], 0x08, D_80896B24[1][0]);
-        gSPSegment(&gfx[2], 0x09, D_80896B24[1][1]);
-        gSPSegment(&gfx[3], 0x0A, D_80896B24[1][2]);
+        gSPSegment(&gfx[1], 0x08, Lib_SegmentedToVirtual(D_80896B24[1][0]));
+        gSPSegment(&gfx[2], 0x09, Lib_SegmentedToVirtual(D_80896B24[1][1]));
+        gSPSegment(&gfx[3], 0x0A, Lib_SegmentedToVirtual(D_80896B24[1][2]));
     }
 
     POLY_OPA_DISP = &gfx[4];

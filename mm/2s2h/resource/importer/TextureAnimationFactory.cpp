@@ -143,6 +143,16 @@ ResourceFactoryBinaryTextureAnimationV0::ReadResource(std::shared_ptr<Ship::File
         tAnim->anims.emplace_back(anim);
     }
 
+    // Always push a terminating sentinel entry so that AnimatedMat_DrawMain or any other consumer
+    // that traverses until segment < 0 or segment == 0 will never overrun past the end of the array.
+    if (numEntries == 0) {
+        AnimatedMaterial emptySentinel = { 0, -1, nullptr };
+        tAnim->anims.emplace_back(emptySentinel);
+    } else {
+        AnimatedMaterial termSentinel = { -1, -1, nullptr };
+        tAnim->anims.emplace_back(termSentinel);
+    }
+
     return tAnim;
 }
 } // namespace SOH

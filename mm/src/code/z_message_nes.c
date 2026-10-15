@@ -21,36 +21,25 @@ void Message_FindMessageNES(PlayState* play, u16 textId) {
     MessageContext* msgCtx = &play->msgCtx;
     Font* font = &msgCtx->font;
     MessageTableEntry* msgEntry = msgCtx->messageEntryTableNes;
-    const char* segment = msgEntry->segment;
-    const char* foundSegment;
-    const char* nextSegment;
+
+    if (msgEntry == NULL) {
+        font->messageStart = (uintptr_t)NULL;
+        return;
+    }
 
     while (msgEntry->textId != 0xFFFF) {
         if (msgEntry->textId == textId) {
             // #region 2SH2 [Port] Just assign the msgEntry, we don't need to change the messageStart and messageEnd
-            font->messageStart = msgEntry;
+            font->messageStart = (uintptr_t)msgEntry;
             return;
             // #endregion
-
-            foundSegment = msgEntry->segment;
-            msgEntry++;
-            nextSegment = msgEntry->segment;
-
-            font->messageStart = foundSegment - segment;
-            font->messageEnd = nextSegment - foundSegment;
-            return;
         }
         msgEntry++;
     }
 
-    msgEntry = msgCtx->messageEntryTableNes;
-    foundSegment = msgEntry->segment;
-    msgEntry++;
-    nextSegment = msgEntry->segment;
     // #region 2S2H [Port] This seems to be a fallback if the message isn't found it just
     // returns the first message, we still don't need to change the messageStart and messageEnd
-    // font->messageStart = foundSegment - segment;
-    // font->messageEnd = nextSegment - foundSegment;
+    font->messageStart = (uintptr_t)msgCtx->messageEntryTableNes;
     // #endregion
 }
 
@@ -514,7 +503,11 @@ void Message_DrawTextNES(PlayState* play, Gfx** gfxP, u16 textDrawPos) {
             case 0x13:
                 sp130++;
 
-                msgCtx->textPosX = msgCtx->unk11F1A[sp130] + msgCtx->unk11FF8;
+                if (sp130 < ARRAY_COUNT(msgCtx->unk11F1A)) {
+                    msgCtx->textPosX = msgCtx->unk11F1A[sp130] + msgCtx->unk11FF8;
+                } else {
+                    msgCtx->textPosX = msgCtx->unk11FF8;
+                }
                 if (msgCtx->choiceNum == 1) {
                     if (!play->pauseCtx.bombersNotebookOpen) {
                         msgCtx->textPosX += 16;
@@ -1027,9 +1020,11 @@ void Message_DecodeNES(PlayState* play) {
             } else {
                 msgCtx->unk11FFA = msgCtx->textboxY + 8;
             }
-            msgCtx->unk11F1A[spC6] = 0;
-            if (msgCtx->unk11F18 != 0) {
-                msgCtx->unk11F1A[spC6] = (s16)((msgCtx->textCharScale * 16.0f * 16.0f) - spA4) / 2;
+            if (spC6 < ARRAY_COUNT(msgCtx->unk11F1A)) {
+                msgCtx->unk11F1A[spC6] = 0;
+                if (msgCtx->unk11F18 != 0) {
+                    msgCtx->unk11F1A[spC6] = (s16)((msgCtx->textCharScale * 16.0f * 16.0f) - spA4) / 2;
+                }
             }
 
             spA4 = 0.0f;
@@ -1873,9 +1868,11 @@ void Message_DecodeNES(PlayState* play) {
             }
             msgCtx->msgBufPos++;
         } else if ((curChar == 0x13) || (curChar == 0x11)) {
-            msgCtx->unk11F1A[spC6] = 0;
-            if (msgCtx->unk11F18 != 0) {
-                msgCtx->unk11F1A[spC6] = ((msgCtx->textCharScale * 16.0f * 16.0f) - spA4) * 0.5f;
+            if (spC6 < ARRAY_COUNT(msgCtx->unk11F1A)) {
+                msgCtx->unk11F1A[spC6] = 0;
+                if (msgCtx->unk11F18 != 0) {
+                    msgCtx->unk11F1A[spC6] = ((msgCtx->textCharScale * 16.0f * 16.0f) - spA4) * 0.5f;
+                }
             }
             spC6++;
             spA4 = 0.0f;

@@ -68,7 +68,7 @@ typedef struct {
     /* 0x1C */ ActorFunc unk_1C;
 } BgBreakwallStruct; // size = 0x20
 
-BgBreakwallStruct D_808B8140[] = {
+static const BgBreakwallStruct D_808B8140[] = {
     { OBJECT_OMOYA_OBJ, object_omoya_obj_DL_0001A0, NULL, NULL, NULL, func_808B7380, func_808B77D0, NULL },
     { OBJECT_YUKIMURA_OBJ, object_yukimura_obj_DL_000F98, object_yukimura_obj_DL_000EB0,
       object_yukimura_obj_Matanimheader_002090, NULL, func_808B73C4, func_808B77D0, NULL },
@@ -215,7 +215,12 @@ s32 func_808B751C(BgBreakwall* this, PlayState* play) {
 void BgBreakwall_Init(Actor* thisx, PlayState* play) {
     s32 pad;
     BgBreakwall* this = THIS;
-    BgBreakwallStruct* sp24 = &D_808B8140[BGBREAKWALL_GET_F(&this->dyna.actor)];
+    u32 f = BGBREAKWALL_GET_F(&this->dyna.actor);
+    if (f >= ARRAY_COUNT(D_808B8140)) {
+        Actor_Kill(&this->dyna.actor);
+        return;
+    }
+    const BgBreakwallStruct* sp24 = &D_808B8140[f];
 
     Actor_ProcessInitChain(&this->dyna.actor, sInitChain);
     this->objectSlot = Object_GetSlot(&play->objectCtx, sp24->objectId);
@@ -231,7 +236,11 @@ void BgBreakwall_Init(Actor* thisx, PlayState* play) {
 
 void BgBreakwall_Destroy(Actor* thisx, PlayState* play) {
     BgBreakwall* this = THIS;
-    BgBreakwallStruct* temp_s1 = &D_808B8140[BGBREAKWALL_GET_F(&this->dyna.actor)];
+    u32 f = BGBREAKWALL_GET_F(&this->dyna.actor);
+    if (f >= ARRAY_COUNT(D_808B8140)) {
+        return;
+    }
+    const BgBreakwallStruct* temp_s1 = &D_808B8140[f];
 
     if (temp_s1->unk_10 != NULL) {
         DynaPoly_DeleteBgActor(play, &play->colCtx.dyna, this->dyna.bgId);
@@ -240,7 +249,12 @@ void BgBreakwall_Destroy(Actor* thisx, PlayState* play) {
 
 void func_808B76CC(BgBreakwall* this, PlayState* play) {
     if (Object_IsLoaded(&play->objectCtx, this->objectSlot)) {
-        BgBreakwallStruct* temp_s1 = &D_808B8140[BGBREAKWALL_GET_F(&this->dyna.actor)];
+        u32 f = BGBREAKWALL_GET_F(&this->dyna.actor);
+        if (f >= ARRAY_COUNT(D_808B8140)) {
+            Actor_Kill(&this->dyna.actor);
+            return;
+        }
+        const BgBreakwallStruct* temp_s1 = &D_808B8140[f];
 
         this->dyna.actor.objectSlot = this->objectSlot;
         this->dyna.actor.draw = BgBreakwall_Draw;
@@ -253,9 +267,10 @@ void func_808B76CC(BgBreakwall* this, PlayState* play) {
 
         Actor_SetObjectDependency(play, &this->dyna.actor);
 
-        if (temp_s1->unk_0C != NULL) {
-            temp_s1->unk_0C = Lib_SegmentedToVirtual(temp_s1->unk_0C);
-        }
+        // In 2ship, D_808B8140 is a persistent static array, and unk_0C is an OTR asset path string
+        // (e.g. "__OTR__objects/object_keikoku_obj/object_keikoku_obj_Matanimheader_004290").
+        // Mutating unk_0C corrupted D_808B8140 across scene transitions with dangling pointers to freed memory.
+        // AnimatedMat_DrawMain dynamically handles OTR path strings on each draw call.
 
         if (temp_s1->unk_10 != NULL) {
             DynaPolyActor_Init(&this->dyna, 0);
@@ -415,7 +430,11 @@ void func_808B7D34(Actor* thisx, PlayState* play) {
 void BgBreakwall_Draw(Actor* thisx, PlayState* play) {
     s32 pad;
     BgBreakwall* this = THIS;
-    BgBreakwallStruct* temp_s2 = &D_808B8140[BGBREAKWALL_GET_F(&this->dyna.actor)];
+    u32 f = BGBREAKWALL_GET_F(&this->dyna.actor);
+    if (f >= ARRAY_COUNT(D_808B8140)) {
+        return;
+    }
+    const BgBreakwallStruct* temp_s2 = &D_808B8140[f];
 
     OPEN_DISPS(play->state.gfxCtx);
 

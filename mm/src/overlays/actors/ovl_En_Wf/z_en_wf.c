@@ -240,14 +240,14 @@ static DamageTable sDamageTable2 = {
 
 static CollisionCheckInfoInit sColChkInfoInit = { 8, 50, 100, MASS_HEAVY };
 
-static TexturePtr sNormalEyeTextures[] = {
+static const TexturePtr sNormalEyeTextures[] = {
     gWolfosNormalEyeOpenTex,
     gWolfosNormalEyeHalfTex,
     gWolfosNormalEyeNarrowTex,
     gWolfosNormalEyeHalfTex,
 };
 
-static TexturePtr sWhiteEyeTextures[] = {
+static const TexturePtr sWhiteEyeTextures[] = {
     gWolfosWhiteEyeOpenTex,
     gWolfosWhiteEyeHalfTex,
     gWolfosWhiteEyeNarrowTex,
@@ -258,8 +258,6 @@ static InitChainEntry sInitChain[] = {
     ICHAIN_F32(targetArrowOffset, 2000, ICHAIN_CONTINUE),
     ICHAIN_F32_DIV1000(gravity, -2000, ICHAIN_STOP),
 };
-
-static s32 D_809942D8 = 0;
 
 void EnWf_Init(Actor* thisx, PlayState* play) {
     EnWf* this = THIS;
@@ -341,13 +339,6 @@ void EnWf_Init(Actor* thisx, PlayState* play) {
 
     func_800BC154(play, &play->actorCtx, &this->actor, 5);
 
-    if (D_809942D8 == 0) {
-        for (i = 0; i < ARRAY_COUNT(sNormalEyeTextures); i++) {
-            sNormalEyeTextures[i] = Lib_SegmentedToVirtual(sNormalEyeTextures[i]);
-            sWhiteEyeTextures[i] = Lib_SegmentedToVirtual(sWhiteEyeTextures[i]);
-        }
-        D_809942D8 = 1;
-    }
     this->unk_2A2 = Rand_ZeroFloat(96.0f);
 }
 
@@ -1601,9 +1592,9 @@ void EnWf_Draw(Actor* thisx, PlayState* play) {
         Gfx_SetupDL25_Opa(play->state.gfxCtx);
 
         if (this->actor.params == 0) {
-            gSPSegment(POLY_OPA_DISP++, 0x08, sNormalEyeTextures[this->eyeIndex]);
+            gSPSegment(POLY_OPA_DISP++, 0x08, Lib_SegmentedToVirtual(sNormalEyeTextures[this->eyeIndex]));
         } else {
-            gSPSegment(POLY_OPA_DISP++, 0x08, sWhiteEyeTextures[this->eyeIndex]);
+            gSPSegment(POLY_OPA_DISP++, 0x08, Lib_SegmentedToVirtual(sWhiteEyeTextures[this->eyeIndex]));
         }
 
         CLOSE_DISPS(play->state.gfxCtx);

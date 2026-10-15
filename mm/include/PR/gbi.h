@@ -3847,13 +3847,14 @@ typedef union {
     }
 
 #define gDPFillWideRectangle(pkt, ulx, uly, lrx, lry)                           \
-    {                                                                           \
-        Gfx *_g0 = (Gfx*)(pkt), *_g1 = (Gfx*)(pkt);                             \
+    do {                                                                        \
+        Gfx* _g0 = (Gfx*)(pkt);                                                 \
         _g0->words.w0 = _SHIFTL(G_FILLWIDERECT, 24, 8) | _SHIFTL((lrx), 2, 22); \
         _g0->words.w1 = _SHIFTL((lry), 2, 22);                                  \
+        Gfx* _g1 = (Gfx*)(pkt);                                                 \
         _g1->words.w0 = _SHIFTL((ulx), 2, 22);                                  \
         _g1->words.w1 = _SHIFTL((uly), 2, 22);                                  \
-    }
+    } while (0)
 
 /* Fraction never used in fill */
 #define gDPFillRectangle(pkt, ulx, uly, lrx, lry)                                                     \

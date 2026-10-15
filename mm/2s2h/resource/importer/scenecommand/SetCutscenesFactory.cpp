@@ -19,7 +19,10 @@ std::shared_ptr<Ship::IResource> SetCutsceneFactoryMM::ReadResource(std::shared_
         entry.exit = reader->ReadUInt16();
         entry.entrance = reader->ReadUByte();
         entry.flag = reader->ReadUByte();
-        auto resource = Ship::Context::GetInstance()->GetResourceManager()->LoadResourceProcess(path.c_str());
+        std::shared_ptr<Ship::IResource> resource = nullptr;
+        if (!path.empty()) {
+            resource = Ship::Context::GetInstance()->GetResourceManager()->LoadResourceProcess(path.c_str());
+        }
         if (resource != nullptr) {
             entry.data = std::static_pointer_cast<Cutscene>(resource)->GetPointer();
         } else {

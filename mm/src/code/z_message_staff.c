@@ -6,19 +6,23 @@ void Message_FindCreditsMessage(PlayState* play, u16 textId) {
     MessageContext* msgCtx = &play->msgCtx;
     Font* font = &msgCtx->font;
     MessageTableEntry* msgEntry = msgCtx->messageTableStaff;
-    const char* segment = msgEntry->segment;
-    const char* foundSegment;
-    const char* nextSegment;
+
+    if (msgEntry == NULL) {
+        font->messageStart = (uintptr_t)NULL;
+        return;
+    }
 
     while (msgEntry->textId != 0xFFFF) {
         if (msgEntry->textId == textId) {
             // 2SH2 [Port] Just assign the msgEntry, we don't need to change the messageStart and messageEnd
-            font->messageStart = msgEntry;
+            font->messageStart = (uintptr_t)msgEntry;
             font->charBuf[font->unk_11D88][0] = msgEntry->typePos;
-            break;
+            return;
         }
         msgEntry++;
     }
+
+    font->messageStart = (uintptr_t)msgCtx->messageTableStaff;
 }
 
 f32 sCreditsFontWidths[144] = {

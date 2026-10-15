@@ -1935,12 +1935,18 @@ s16 func_80169BF8(PlayState* this, s16 camId, s16 uid) {
 }
 
 u16 Play_GetActorCsCamSetting(PlayState* this, s32 csCamDataIndex) {
+    if (this->actorCsCamList == NULL || csCamDataIndex < 0) {
+        return CAM_SET_NONE;
+    }
     ActorCsCamInfo* actorCsCamList = &this->actorCsCamList[csCamDataIndex];
 
     return actorCsCamList->setting;
 }
 
 Vec3s* Play_GetActorCsCamFuncData(PlayState* this, s32 csCamDataIndex) {
+    if (this->actorCsCamList == NULL || csCamDataIndex < 0) {
+        return NULL;
+    }
     ActorCsCamInfo* actorCsCamList = &this->actorCsCamList[csCamDataIndex];
 
     return Lib_SegmentedToVirtual(actorCsCamList->actorCsCamFuncData);

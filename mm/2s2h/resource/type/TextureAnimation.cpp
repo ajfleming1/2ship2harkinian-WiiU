@@ -3,6 +3,9 @@
 namespace SOH {
 TextureAnimation::~TextureAnimation() {
     for (auto& a : anims) {
+        if (a.params == nullptr) {
+            continue;
+        }
         switch ((TextureAnimationParamsType)a.type) {
             case TextureAnimationParamsType::SingleScroll:
                 // a.params is a void* and must be allocated and freed with malloc/free
@@ -24,6 +27,8 @@ TextureAnimation::~TextureAnimation() {
                 delete[]((AnimatedMatTexCycleParams*)a.params)->textureIndexList;
                 delete[]((AnimatedMatTexCycleParams*)a.params)->textureList;
                 free(a.params);
+                break;
+            default:
                 break;
         }
     }

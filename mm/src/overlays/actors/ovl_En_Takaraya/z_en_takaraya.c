@@ -47,14 +47,14 @@ ActorInit En_Takaraya_InitVars = {
     /**/ EnTakaraya_Draw,
 };
 
-TexturePtr sEyesUpTextures[] = {
+static const TexturePtr sEyesUpTextures[] = {
     gTreasureChestShopGalEyeOpenUpTex,
     gTreasureChestShopGalEyeHalfUpTex,
     gTreasureChestShopGalEyeClosedTex,
     gTreasureChestShopGalEyeHalfUpTex,
 };
 
-TexturePtr sEyesDownTextures[] = {
+static const TexturePtr sEyesDownTextures[] = {
     gTreasureChestShopGalEyeOpenDownTex,
     gTreasureChestShopGalEyeHalfDownTex,
     gTreasureChestShopGalEyeClosedTex,
@@ -65,8 +65,6 @@ static InitChainEntry sInitChain[] = {
     ICHAIN_U8(targetMode, TARGET_MODE_6, ICHAIN_CONTINUE),
     ICHAIN_F32(targetArrowOffset, 1000, ICHAIN_STOP),
 };
-
-u32 sTexturesDesegmented = false;
 
 u16 D_80ADFB2C[PLAYER_FORM_MAX] = {
     0x76D, // PLAYER_FORM_FIERCE_DEITY
@@ -110,13 +108,6 @@ void EnTakaraya_Init(Actor* thisx, PlayState* play) {
                        this->morphTable, TREASURE_CHEST_SHOP_GAL_LIMB_MAX);
     this->switchFlag = EN_TAKARAYA_GET_SWITCH_FLAG(thisx);
     thisx->params &= 0xFF;
-    if (!sTexturesDesegmented) {
-        for (i = 0; i < ARRAY_COUNT(sEyesDownTextures); i++) {
-            sEyesUpTextures[i] = Lib_SegmentedToVirtual(sEyesUpTextures[i]);
-            sEyesDownTextures[i] = Lib_SegmentedToVirtual(sEyesDownTextures[i]);
-        }
-        sTexturesDesegmented = true;
-    }
     this->eyeTexIndex = 2;
     if (gSaveContext.save.entrance == ENTRANCE(TREASURE_CHEST_SHOP, 1)) {
         Audio_StopSubBgm();
@@ -425,9 +416,9 @@ void EnTakaraya_Draw(Actor* thisx, PlayState* play) {
     Gfx_SetupDL25_Opa(play->state.gfxCtx);
 
     if ((GET_PLAYER_FORM == PLAYER_FORM_DEKU) || (GET_PLAYER_FORM == PLAYER_FORM_HUMAN)) {
-        gSPSegment(POLY_OPA_DISP++, 0x08, sEyesDownTextures[this->eyeTexIndex]);
+        gSPSegment(POLY_OPA_DISP++, 0x08, Lib_SegmentedToVirtual(sEyesDownTextures[this->eyeTexIndex]));
     } else {
-        gSPSegment(POLY_OPA_DISP++, 0x08, sEyesUpTextures[this->eyeTexIndex]);
+        gSPSegment(POLY_OPA_DISP++, 0x08, Lib_SegmentedToVirtual(sEyesUpTextures[this->eyeTexIndex]));
     }
     SkelAnime_DrawTransformFlexOpa(play, this->skelAnime.skeleton, this->skelAnime.jointTable,
                                    this->skelAnime.dListCount, EnTakaraya_OverrideLimbDraw, NULL,

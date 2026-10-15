@@ -33,13 +33,10 @@ static InitChainEntry sInitChain[] = {
     ICHAIN_VEC3F_DIV1000(scale, 100, ICHAIN_STOP),
 };
 
-AnimatedMaterial* D_80C16470;
-
 void ObjYado_Init(Actor* thisx, PlayState* play) {
     ObjYado* this = THIS;
 
     Actor_ProcessInitChain(&this->actor, sInitChain);
-    D_80C16470 = Lib_SegmentedToVirtual(object_yado_obj_Matanimheader_0012E8);
     this->isNight = gSaveContext.save.isNight;
 }
 
@@ -66,7 +63,7 @@ void ObjYado_Draw(Actor* thisx, PlayState* play) {
         gSPSegment(POLY_OPA_DISP++, 0x0A, Gfx_PrimColor(play->state.gfxCtx, 128, 255, 255, 215, 255));
     }
 
-    AnimatedMat_Draw(play, D_80C16470);
+    AnimatedMat_Draw(play, Lib_SegmentedToVirtual(object_yado_obj_Matanimheader_0012E8));
     Gfx_DrawDListOpa(play, object_yado_obj_DL_000430);
     Gfx_DrawDListXlu(play, object_yado_obj_DL_000320);
 

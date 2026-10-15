@@ -801,6 +801,9 @@ f32 Camera_GetFloorYLayer(Camera* camera, Vec3f* norm, Vec3f* pos, s32* bgId) {
  * Returns the CameraSettingType of the camera from either the bgCam or the actorCsCam at index `camDataId`
  */
 s16 Camera_GetBgCamOrActorCsCamSetting(Camera* camera, u32 camDataId) {
+    if ((s32)camDataId < 0) {
+        return CAM_SET_NONE;
+    }
     if (camDataId & CAM_DATA_IS_BG) {
         return BgCheck_GetBgCamSettingImpl(&camera->play->colCtx, camDataId & ~CAM_DATA_IS_BG, BGCHECK_SCENE);
     } else {
@@ -812,6 +815,9 @@ s16 Camera_GetBgCamOrActorCsCamSetting(Camera* camera, u32 camDataId) {
  * Returns either the bgCam data or the actorCsCam data at index `camDataId`
  */
 Vec3s* Camera_GetBgCamOrActorCsCamFuncData(Camera* camera, u32 camDataId) {
+    if ((s32)camDataId < 0) {
+        return NULL;
+    }
     if (camDataId & CAM_DATA_IS_BG) {
         return BgCheck_GetBgCamFuncDataImpl(&camera->play->colCtx, camDataId & ~CAM_DATA_IS_BG, BGCHECK_SCENE);
     } else {
@@ -2549,7 +2555,9 @@ s32 Camera_Normal4(Camera* camera) {
 
     if (RELOAD_PARAMS(camera)) {
         bgCamFuncData = (BgCamFuncData*)Camera_GetBgCamOrActorCsCamFuncData(camera, camera->bgCamIndex);
-        D_801EDBF0 = bgCamFuncData->rot.z;
+        if (bgCamFuncData != NULL) {
+            D_801EDBF0 = bgCamFuncData->rot.z;
+        }
     }
 
     roll = camera->roll;
@@ -2605,25 +2613,27 @@ s32 Camera_Normal0(Camera* camera) {
 
     if (RELOAD_PARAMS(camera)) {
         bgCamFuncData = (BgCamFuncData*)Camera_GetBgCamOrActorCsCamFuncData(camera, camera->bgCamIndex);
-        rwData->unk_00 = Camera_Vec3sToVec3f(&bgCamFuncData->pos);
-        rwData->unk_20 = bgCamFuncData->rot.x;
-        rwData->unk_22 = bgCamFuncData->rot.y;
-        rwData->unk_24 = focalActorPosRot->pos.y;
-        if (bgCamFuncData->fov == -1) {
-            rwData->unk_1C = roData->unk_14;
-        } else {
-            if (bgCamFuncData->fov > 360) {
-                phi_f0 = CAM_RODATA_UNSCALE(bgCamFuncData->fov);
+        if (bgCamFuncData != NULL) {
+            rwData->unk_00 = Camera_Vec3sToVec3f(&bgCamFuncData->pos);
+            rwData->unk_20 = bgCamFuncData->rot.x;
+            rwData->unk_22 = bgCamFuncData->rot.y;
+            rwData->unk_24 = focalActorPosRot->pos.y;
+            if (bgCamFuncData->fov == -1) {
+                rwData->unk_1C = roData->unk_14;
             } else {
-                phi_f0 = bgCamFuncData->fov;
+                if (bgCamFuncData->fov > 360) {
+                    phi_f0 = CAM_RODATA_UNSCALE(bgCamFuncData->fov);
+                } else {
+                    phi_f0 = bgCamFuncData->fov;
+                }
+                rwData->unk_1C = phi_f0;
             }
-            rwData->unk_1C = phi_f0;
-        }
 
-        if (bgCamFuncData->unk_0E == -1) {
-            rwData->unk_2C = 0;
-        } else {
-            rwData->unk_2C = bgCamFuncData->unk_0E;
+            if (bgCamFuncData->unk_0E == -1) {
+                rwData->unk_2C = 0;
+            } else {
+                rwData->unk_2C = bgCamFuncData->unk_0E;
+            }
         }
 
         rwData->unk_18 = 0.0f;
@@ -2851,15 +2861,19 @@ s32 Camera_Parallel1(Camera* camera) {
                 yNormal = 0.8f - ((68.0f / focalActorHeight) * -0.2f);
 
                 bgCamFuncData = (BgCamFuncData*)Camera_GetBgCamOrActorCsCamFuncData(camera, camera->bgCamIndex);
-
-                rwData->unk_20 = bgCamFuncData->rot.x;
-                rwData->unk_1E = bgCamFuncData->rot.y;
-                rwData->unk_08 = (bgCamFuncData->fov == -1)   ? roData->unk_14
-                                 : (bgCamFuncData->fov > 360) ? CAM_RODATA_UNSCALE(bgCamFuncData->fov)
-                                                              : bgCamFuncData->fov;
-                rwData->unk_00 = (bgCamFuncData->unk_0E == -1)
-                                     ? roData->unk_04
-                                     : CAM_RODATA_UNSCALE(bgCamFuncData->unk_0E) * focalActorHeight * yNormal;
+                if (bgCamFuncData != NULL) {
+                    rwData->unk_20 = bgCamFuncData->rot.x;
+                    rwData->unk_1E = bgCamFuncData->rot.y;
+                    rwData->unk_08 = (bgCamFuncData->fov == -1)   ? roData->unk_14
+                                     : (bgCamFuncData->fov > 360) ? CAM_RODATA_UNSCALE(bgCamFuncData->fov)
+                                                                  : bgCamFuncData->fov;
+                    rwData->unk_00 = (bgCamFuncData->unk_0E == -1)
+                                         ? roData->unk_04
+                                         : CAM_RODATA_UNSCALE(bgCamFuncData->unk_0E) * focalActorHeight * yNormal;
+                } else {
+                    rwData->unk_08 = roData->unk_14;
+                    rwData->unk_00 = roData->unk_04;
+                }
             } else {
                 rwData->unk_08 = roData->unk_14;
                 rwData->unk_00 = roData->unk_04;
@@ -4770,7 +4784,7 @@ s32 Camera_Fixed1(Camera* camera) {
     VecGeo sp7C;
     u32 negOne;
     Vec3f adjustedPos;
-    BgCamFuncData* bgCamFuncData;
+    BgCamFuncData* bgCamFuncData = NULL;
     Vec3f* eye = &camera->eye;
     Vec3f* at = &camera->at;
     PosRot* focalActorPosRot = &camera->focalActorPosRot;
@@ -4788,10 +4802,17 @@ s32 Camera_Fixed1(Camera* camera) {
     } else {
         values = sCameraSettings[camera->setting].cameraModes[camera->mode].values;
         bgCamFuncData = (BgCamFuncData*)Camera_GetBgCamOrActorCsCamFuncData(camera, camera->bgCamIndex);
-        rwData->eyePosRotTarget.pos = Camera_Vec3sToVec3f(&bgCamFuncData->pos);
-
-        rwData->eyePosRotTarget.rot = bgCamFuncData->rot;
-        rwData->fov = bgCamFuncData->fov;
+        if (bgCamFuncData != NULL) {
+            rwData->eyePosRotTarget.pos = Camera_Vec3sToVec3f(&bgCamFuncData->pos);
+            rwData->eyePosRotTarget.rot = bgCamFuncData->rot;
+            rwData->fov = bgCamFuncData->fov;
+        } else {
+            rwData->eyePosRotTarget.pos = *eye;
+            rwData->eyePosRotTarget.rot.x = 0;
+            rwData->eyePosRotTarget.rot.y = 0;
+            rwData->eyePosRotTarget.rot.z = 0;
+            rwData->fov = 60;
+        }
         rwData->focalActor = camera->focalActor;
 
         roData->unk_00 = GET_NEXT_SCALED_RO_DATA(values) * focalActorHeight;
@@ -4836,7 +4857,7 @@ s32 Camera_Fixed1(Camera* camera) {
             roData->fov = CAM_RODATA_UNSCALE(rwData->fov);
         }
 
-        if (bgCamFuncData->unk_0E != (s32)negOne) {
+        if (bgCamFuncData != NULL && bgCamFuncData->unk_0E != (s32)negOne) {
             roData->unk_04 = CAM_RODATA_UNSCALE(bgCamFuncData->unk_0E);
         }
     }
@@ -5465,27 +5486,35 @@ s32 Camera_Unique0(Camera* camera) {
     switch (camera->animState) {
         case 0:
             bgCamFuncData = (BgCamFuncData*)Camera_GetBgCamOrActorCsCamFuncData(camera, camera->bgCamIndex);
-            rwData->unk_1C.point = Camera_Vec3sToVec3f(&bgCamFuncData->pos);
-            camera->eye = camera->eyeNext = rwData->unk_1C.point;
-            rwData->unk_34 = bgCamFuncData->rot;
+            if (bgCamFuncData != NULL) {
+                rwData->unk_1C.point = Camera_Vec3sToVec3f(&bgCamFuncData->pos);
+                camera->eye = camera->eyeNext = rwData->unk_1C.point;
+                rwData->unk_34 = bgCamFuncData->rot;
 
-            temp_v1 = bgCamFuncData->fov;
-            if (temp_v1 != -1) {
-                if (temp_v1 <= 360) {
-                    camera->fov = temp_v1;
-                } else {
-                    camera->fov = temp_v1 * 0.01f;
+                temp_v1 = bgCamFuncData->fov;
+                if (temp_v1 != -1) {
+                    if (temp_v1 <= 360) {
+                        camera->fov = temp_v1;
+                    } else {
+                        camera->fov = temp_v1 * 0.01f;
+                    }
                 }
-            }
 
-            rwData->timer = bgCamFuncData->unk_0E;
-            if (rwData->timer == -1) {
-                rwData->timer = 60;
-            }
+                rwData->timer = bgCamFuncData->unk_0E;
+                if (rwData->timer == -1) {
+                    rwData->timer = 60;
+                }
 
-            if (bgCamFuncData->unk_10 != -1) {
-                rwData->unk_18 = bgCamFuncData->unk_10 * 0.01f;
+                if (bgCamFuncData->unk_10 != -1) {
+                    rwData->unk_18 = bgCamFuncData->unk_10 * 0.01f;
+                } else {
+                    rwData->unk_18 = roData->unk_04 * 0.01f;
+                }
             } else {
+                rwData->unk_1C.point = camera->eye;
+                camera->eye = camera->eyeNext = rwData->unk_1C.point;
+                rwData->unk_34.x = rwData->unk_34.y = rwData->unk_34.z = 0;
+                rwData->timer = 60;
                 rwData->unk_18 = roData->unk_04 * 0.01f;
             }
 
@@ -6890,8 +6919,10 @@ s32 Camera_Special9(Camera* camera) {
             // Setup for the camera moving behind the door
             if (roData->interfaceFlags & SPECIAL9_FLAG_0) {
                 bgCamFuncData = (BgCamFuncData*)Camera_GetBgCamOrActorCsCamFuncData(camera, camera->bgCamIndex);
-                *eyeNext = Camera_Vec3sToVec3f(&bgCamFuncData->pos);
-                spB8 = *eye = *eyeNext;
+                if (bgCamFuncData != NULL) {
+                    *eyeNext = Camera_Vec3sToVec3f(&bgCamFuncData->pos);
+                    spB8 = *eye = *eyeNext;
+                }
             } else {
                 s16 camEyeSide;
                 s16 randFloat;

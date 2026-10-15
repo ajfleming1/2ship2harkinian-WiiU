@@ -31,8 +31,6 @@ void func_80B94E34(EnZog* this, PlayState* play);
 void func_80B95128(EnZog* this, PlayState* play);
 void func_80B95240(EnZog* this, PlayState* play);
 
-static u8 D_80B95E10;
-
 ActorInit En_Zog_InitVars = {
     /**/ ACTOR_EN_ZOG,
     /**/ ACTORCAT_NPC,
@@ -65,9 +63,9 @@ static ColliderCylinderInit sCylinderInit = {
     { 30, 40, 0, { 0, 0, 0 } },
 };
 
-static TexturePtr D_80B958AC[] = { object_zog_Tex_024750, object_zog_Tex_024F50, object_zog_Tex_025750 };
+static const TexturePtr D_80B958AC[] = { object_zog_Tex_024750, object_zog_Tex_024F50, object_zog_Tex_025750 };
 
-static TexturePtr D_80B958B8[] = { object_zog_Tex_025F50, object_zog_Tex_026750 };
+static const TexturePtr D_80B958B8[] = { object_zog_Tex_025F50, object_zog_Tex_026750 };
 
 static AnimationHeader* sAnimations[] = {
     &object_zog_Anim_00FC0C, &object_zog_Anim_0106B0, &object_zog_Anim_0166F4, &object_zog_Anim_017170,
@@ -157,18 +155,6 @@ void EnZog_Init(Actor* thisx, PlayState* play) {
     EnZog* this = THIS;
     s32 i;
     s16 csId;
-
-    if (!D_80B95E10) {
-        for (i = 0; i < ARRAY_COUNT(D_80B958AC); i++) {
-            D_80B958AC[i] = Lib_SegmentedToVirtual(D_80B958AC[i]);
-        }
-
-        for (i = 0; i < ARRAY_COUNT(D_80B958B8); i++) {
-            D_80B958B8[i] = Lib_SegmentedToVirtual(D_80B958B8[i]);
-        }
-
-        D_80B95E10 = true;
-    }
 
     ActorShape_Init(&this->actor.shape, 0.0f, func_80B93310, 24.0f);
     Actor_SetScale(&this->actor, 0.01f);

@@ -26,9 +26,6 @@ void func_80B9D508(ObjHunsui* this, PlayState* play);
 void func_80B9D714(ObjHunsui* this, PlayState* play);
 void func_80B9DA60(Actor* thisx, PlayState* play);
 
-AnimatedMaterial* D_80B9DED0;
-AnimatedMaterial* D_80B9DED4;
-
 typedef struct {
     /* 0x0 */ u8 unk_00;
     /* 0x1 */ u8 unk_01;
@@ -216,8 +213,6 @@ void ObjHunsui_Init(Actor* thisx, PlayState* play) {
         DynaPolyActor_LoadMesh(play, &this->dyna, &object_hunsui_Colheader_000C74);
     }
 
-    D_80B9DED0 = Lib_SegmentedToVirtual(object_hunsui_Matanimheader_000BF0);
-    D_80B9DED4 = Lib_SegmentedToVirtual(object_hunsui_Matanimheader_001888);
     SubS_FillCutscenesList(&this->dyna.actor, this->csIdList, ARRAY_COUNT(this->csIdList));
     this->unk_18C = 0;
 
@@ -643,7 +638,7 @@ void ObjHunsui_Draw(Actor* thisx, PlayState* play) {
     }
 
     if (!(this->unk_172 & 2)) {
-        AnimatedMat_Draw(play, D_80B9DED0);
+        AnimatedMat_Draw(play, Lib_SegmentedToVirtual(object_hunsui_Matanimheader_000BF0));
         Gfx_DrawDListXlu(play, object_hunsui_DL_000220);
     }
 }
@@ -671,7 +666,7 @@ void func_80B9DA60(Actor* thisx, PlayState* play) {
 
             CLOSE_DISPS(play->state.gfxCtx);
         } else {
-            AnimatedMat_DrawXlu(play, D_80B9DED4);
+            AnimatedMat_DrawXlu(play, Lib_SegmentedToVirtual(object_hunsui_Matanimheader_001888));
         }
 
         OPEN_DISPS(play->state.gfxCtx);

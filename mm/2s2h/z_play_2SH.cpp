@@ -41,7 +41,13 @@ extern "C" void OTRPlay_InitScene(PlayState* play, s32 spawn) {
 
 extern "C" void OTRPlay_SpawnScene(PlayState* play, s32 sceneId, s32 spawn) {
     s32 pad;
+    if (sceneId < 0 || sceneId >= SCENE_MAX) {
+        return;
+    }
     SceneTableEntry* scene = &gSceneTable[sceneId];
+    if (scene->segment.fileName == nullptr) {
+        return;
+    }
 
     scene->unk_D = 0;
     play->loadedScene = scene;

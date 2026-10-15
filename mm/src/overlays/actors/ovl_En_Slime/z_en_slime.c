@@ -135,7 +135,7 @@ static DamageTable sDamageTable = {
 
 static CollisionCheckInfoInit sColChkInfoInit = { 1, 22, 35, 60 };
 
-static TexturePtr sEyeTextures[] = {
+static const TexturePtr sEyeTextures[] = {
     gChuchuEyeOpenTex,
     gChuchuEyeHalfTex,
     gChuchuEyeClosedTex,
@@ -146,8 +146,6 @@ static InitChainEntry sInitChain[] = {
     ICHAIN_F32(gravity, -2, ICHAIN_CONTINUE),
     ICHAIN_F32(targetArrowOffset, 6000, ICHAIN_STOP),
 };
-
-static s32 sTexturesDesegmented = false;
 
 static Color_RGBA8 sBubblePrimColor = { 255, 255, 255, 255 };
 static Color_RGBA8 sBubbleEnvColor = { 150, 150, 150, 0 };
@@ -174,8 +172,6 @@ static Vec3f sBodyPartPosOffsets[EN_SLIME_BODYPART_MAX] = {
     { 0.0f, 4000.0f, 0.0f },        // EN_SLIME_BODYPART_3
     { 0.0f, 2000.0f, -2000.0f },    // EN_SLIME_BODYPART_4
 };
-
-AnimatedMaterial* sSlimeTexAnim;
 
 void EnSlime_Init(Actor* thisx, PlayState* play) {
     EnSlime* this = THIS;
@@ -208,15 +204,6 @@ void EnSlime_Init(Actor* thisx, PlayState* play) {
 
     // Upper byte of actorParams at init is # of seconds past 10s to revive.
     this->reviveTime = (reviveTimeSeconds * 20) + 200;
-
-    // Update addresses of texture assets (if another instance hasn't already)
-    if (!sTexturesDesegmented) {
-        for (i = 0; i < EN_SLIME_EYETEX_MAX; i++) {
-            sEyeTextures[i] = Lib_SegmentedToVirtual(sEyeTextures[i]);
-        }
-        sSlimeTexAnim = Lib_SegmentedToVirtual(gChuchuSlimeFlowTexAnim);
-        sTexturesDesegmented = true;
-    }
 
     // Set hint IDs and drop item icon depending on chuchu color
     if (EN_SLIME_GET_TYPE(&this->actor) == EN_SLIME_TYPE_YELLOW) {
@@ -1184,7 +1171,7 @@ void EnSlime_Draw(Actor* thisx, PlayState* play) {
     } else {
         primColor = &sPrimColors[this->actor.params];
         envColor = &sEnvColors[this->actor.params];
-        AnimatedMat_Draw(play, sSlimeTexAnim);
+        AnimatedMat_Draw(play, Lib_SegmentedToVirtual(gChuchuSlimeFlowTexAnim));
         gDPSetPrimColor(POLY_XLU_DISP++, 0, 100, primColor->r, primColor->g, primColor->b, primColor->a);
         gDPSetEnvColor(POLY_XLU_DISP++, envColor->r, envColor->g, envColor->b, 255);
     }
@@ -1208,14 +1195,14 @@ void EnSlime_Draw(Actor* thisx, PlayState* play) {
         // Ice block is not active
         Scene_SetRenderModeXlu(play, 0, 1);
 
-        gSPSegment(POLY_OPA_DISP++, 9, (uintptr_t)sEyeTextures[this->eyeTexIndex]);
+        gSPSegment(POLY_OPA_DISP++, 9, (uintptr_t)Lib_SegmentedToVirtual(sEyeTextures[this->eyeTexIndex]));
         gDPSetEnvColor(POLY_OPA_DISP++, 0, 30, 70, 255);
         gSPMatrix(POLY_OPA_DISP++, Matrix_NewMtx(play->state.gfxCtx), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
         gSPDisplayList(POLY_OPA_DISP++, gChuchuEyesDL);
 
     } else {
         Scene_SetRenderModeXlu(play, 1, 2);
-        gSPSegment(POLY_XLU_DISP++, 9, (uintptr_t)sEyeTextures[this->eyeTexIndex]);
+        gSPSegment(POLY_XLU_DISP++, 9, (uintptr_t)Lib_SegmentedToVirtual(sEyeTextures[this->eyeTexIndex]));
         gSPMatrix(POLY_XLU_DISP++, Matrix_NewMtx(play->state.gfxCtx), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
         gSPDisplayList(POLY_XLU_DISP++, gChuchuEyesDL);
     }

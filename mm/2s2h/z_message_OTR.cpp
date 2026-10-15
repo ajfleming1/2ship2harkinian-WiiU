@@ -48,6 +48,11 @@ MessageTableEntry* OTRMessage_LoadTable(const char* filePath, bool isNES) {
         //_message_0xFFFC_nes = (char*)file->messages[i].msg.c_str();
     }
 
+    table[file->messages.size()].textId = 0xFFFF;
+    table[file->messages.size()].typePos = 0;
+    table[file->messages.size()].segment = nullptr;
+    table[file->messages.size()].msgSize = 0;
+
     return table;
 }
 
@@ -56,7 +61,7 @@ extern "C" void OTRMessage_Init() {
 
     auto file2 = std::static_pointer_cast<SOH::TextMM>(Ship::Context::GetInstance()->GetResourceManager()->LoadResource(
         "text/staff_message_data_static/staff_message_data_static"));
-    sMessageTableCredits = (MessageTableEntry*)malloc(sizeof(MessageTableEntry) * file2->messages.size());
+    sMessageTableCredits = (MessageTableEntry*)malloc(sizeof(MessageTableEntry) * (file2->messages.size() + 1));
 
     for (size_t i = 0; i < file2->messages.size(); i++) {
         sMessageTableCredits[i].textId = file2->messages[i].id;
@@ -64,4 +69,9 @@ extern "C" void OTRMessage_Init() {
         sMessageTableCredits[i].segment = file2->messages[i].msg.c_str();
         sMessageTableCredits[i].msgSize = file2->messages[i].msg.size();
     }
+
+    sMessageTableCredits[file2->messages.size()].textId = 0xFFFF;
+    sMessageTableCredits[file2->messages.size()].typePos = 0;
+    sMessageTableCredits[file2->messages.size()].segment = nullptr;
+    sMessageTableCredits[file2->messages.size()].msgSize = 0;
 }

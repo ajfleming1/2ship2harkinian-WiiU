@@ -143,7 +143,7 @@ static DamageTable sDamageTable = {
 
 static CollisionCheckInfoInit sColChkInfoInit = { 2, 25, 100, MASS_IMMOVABLE };
 
-TexturePtr D_808CD58C[] = {
+static const TexturePtr D_808CD58C[] = {
     gEffEnemyDeathFlame1Tex, gEffEnemyDeathFlame2Tex, gEffEnemyDeathFlame3Tex, gEffEnemyDeathFlame4Tex,
     gEffEnemyDeathFlame5Tex, gEffEnemyDeathFlame6Tex, gEffEnemyDeathFlame7Tex, gEffEnemyDeathFlame8Tex,
 };
@@ -153,8 +153,6 @@ static InitChainEntry sInitChain[] = {
     ICHAIN_F32(targetArrowOffset, 1000, ICHAIN_CONTINUE),
     ICHAIN_S8(hintId, TATL_HINT_ID_BEAMOS, ICHAIN_STOP),
 };
-
-s32 D_808CD5B8 = false;
 
 Color_RGBA8 D_808CD5BC = { 0, 0, 255, 0 };
 
@@ -181,12 +179,6 @@ void EnVm_Init(Actor* thisx, PlayState* play) {
     thisx->params &= 0xFF;
     this->actor.bgCheckFlags |= BGCHECKFLAG_PLAYER_400;
 
-    if (!D_808CD5B8) {
-        for (i = 0; i < ARRAY_COUNT(D_808CD58C); i++) {
-            D_808CD58C[i] = Lib_SegmentedToVirtual(D_808CD58C[i]);
-        }
-        D_808CD5B8 = true;
-    }
     func_808CC420(this);
 }
 
@@ -532,7 +524,7 @@ void EnVm_Draw(Actor* thisx, PlayState* play) {
         gSPMatrix(&gfx[2], Matrix_NewMtx(play->state.gfxCtx), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
         gDPSetPrimColor(&gfx[3], 0, 0, 255, 255, 255, 168);
         gDPSetEnvColor(&gfx[4], 0, 0, 255, 0);
-        gSPSegment(&gfx[5], 0x08, D_808CD58C[play->gameplayFrames & 7]);
+        gSPSegment(&gfx[5], 0x08, Lib_SegmentedToVirtual(D_808CD58C[play->gameplayFrames & 7]));
         gSPDisplayList(&gfx[6], gEffEnemyDeathFlameDL);
 
         POLY_XLU_DISP = &gfx[7];

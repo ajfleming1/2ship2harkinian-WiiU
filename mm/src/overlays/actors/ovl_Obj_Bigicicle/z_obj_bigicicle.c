@@ -76,16 +76,12 @@ static ColliderCylinderInit sCylinderInit2 = {
     { 31, 90, -150, { 0, 0, 0 } },
 };
 
-AnimatedMaterial* D_80AE9878 = object_bigicicle_Matanimheader_001678;
-
 Vec3f D_80AE987C = { 0.0f, -1.0f, 0.0f };
 
 static InitChainEntry sInitChain[] = {
     ICHAIN_F32(gravity, -2, ICHAIN_CONTINUE),
     ICHAIN_F32(uncullZoneForward, 5600, ICHAIN_STOP),
 };
-
-s32 D_80AE9890 = false;
 
 Color_RGBA8 D_80AE9894 = { 250, 250, 250, 255 };
 Color_RGBA8 D_80AE9898 = { 180, 180, 180, 255 };
@@ -135,11 +131,6 @@ void ObjBigicicle_Init(Actor* thisx, PlayState* play) {
 
     Collider_UpdateCylinder(&this->actor, &this->collider1);
     Collider_UpdateCylinder(&this->actor, &this->collider2);
-
-    if (!D_80AE9890) {
-        D_80AE9878 = Lib_SegmentedToVirtual(D_80AE9878);
-        D_80AE9890 = true;
-    }
 
     this->unk_149 = 0;
     this->actionFunc = func_80AE8FD4;
@@ -317,6 +308,6 @@ void ObjBigicicle_Draw(Actor* thisx, PlayState* play) {
 
     Gfx_DrawDListXlu(play, D_80AE989C[this->unk_149]);
     Gfx_DrawDListXlu(play, D_80AE98A8[this->unk_149]);
-    AnimatedMat_Draw(play, D_80AE9878);
+    AnimatedMat_Draw(play, Lib_SegmentedToVirtual(object_bigicicle_Matanimheader_001678));
     Gfx_DrawDListXlu(play, object_bigicicle_DL_0014F0);
 }

@@ -43,8 +43,6 @@ s32 D_80A22A10 = 0;
 
 s32 D_80A22A14 = 0;
 
-AnimatedMaterial* D_80A22A18 = NULL;
-
 Vec2f D_80A22A1C[] = {
     { -300.0f, 300.0f }, { 300.0f, 300.0f }, { -300.0f, -300.0f }, { 300.0f, -300.0f }, { 0.0f, 0.0f },
 };
@@ -491,9 +489,6 @@ void ObjSkateblock_Init(Actor* thisx, PlayState* play) {
     Actor_ProcessInitChain(&this->dyna.actor, sInitChain);
     DynaPolyActor_Init(&this->dyna, DYNA_TRANSFORM_POS);
     DynaPolyActor_LoadMesh(play, &this->dyna, &gameplay_dangeon_keep_Colheader_007498);
-    if (D_80A22A18 == NULL) {
-        D_80A22A18 = Lib_SegmentedToVirtual(gameplay_dangeon_keep_Matanimheader_01B370);
-    }
     func_80A22308(this);
     this->unk_1C0 = D_80A22A14;
     D_80A22A14++;
@@ -685,7 +680,7 @@ void ObjSkateblock_Draw(Actor* thisx, PlayState* play) {
     OPEN_DISPS(play->state.gfxCtx);
 
     Gfx_SetupDL25_Opa(play->state.gfxCtx);
-    AnimatedMat_DrawStep(play, D_80A22A18, 0);
+    AnimatedMat_DrawStep(play, Lib_SegmentedToVirtual(gameplay_dangeon_keep_Matanimheader_01B370), 0);
 
     gSPMatrix(POLY_OPA_DISP++, Matrix_NewMtx(play->state.gfxCtx), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
     gDPSetPrimColor(POLY_OPA_DISP++, 0xFF, 0xFF, sp2C->r, sp2C->g, sp2C->b, 255);

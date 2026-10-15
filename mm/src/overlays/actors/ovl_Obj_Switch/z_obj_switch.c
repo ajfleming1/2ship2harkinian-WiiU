@@ -64,12 +64,10 @@ void ObjSwitch_DrawInvisibleEyeSwitch(ObjSwitch* this, PlayState* play);
 void ObjSwitch_DrawEyeSwitch(ObjSwitch* this, PlayState* play);
 void ObjSwitch_DrawCrystalSwitch(ObjSwitch* this, PlayState* play);
 
-static TexturePtr sEyeSwitchTextures[][4] = {
+static const TexturePtr sEyeSwitchTextures[][4] = {
     { gEyeSwitchGoldOpenTex, gEyeSwitchGoldOpeningTex, gEyeSwitchGoldClosingTex, gEyeSwitchGoldClosedTex },
     { gEyeSwitchSilverOpenTex, gEyeSwitchSilverHalfTex, gEyeSwitchSilverClosedTex, gEyeSwitchSilverClosedTex },
 };
-
-static s32 sIsSegmentTableInit = false;
 
 ActorInit Obj_Switch_InitVars = {
     /**/ ACTOR_OBJ_SWITCH,
@@ -201,8 +199,6 @@ static Color_RGB8 sSakonHideoutColor[2] = { { 250, 90, 60 }, { 255, 255, 255 } }
 static Gfx* sFloorSwitchDL[] = { gFloorSwitch1DL, gFloorSwitch3DL, gFloorSwitch2DL, gFloorSwitch2DL, gFloorSwitch1DL };
 
 static Gfx* sEyeSwitchDL[] = { gEyeSwitchGoldDL, gEyeSwitchSilverDL };
-
-static AnimatedMaterial* sCrystalSwitchAnimatedMat;
 
 void ObjSwitch_InitJntSphCollider(ObjSwitch* this, PlayState* play, ColliderJntSphInit* init) {
     s32 pad;
@@ -395,23 +391,6 @@ void ObjSwitch_Init(Actor* thisx, PlayState* play) {
     }
     if (OBJ_SWITCH_IS_INVISIBLE(&this->dyna.actor)) {
         this->dyna.actor.flags |= 0x80;
-    }
-    if (type == OBJSWITCH_TYPE_EYE) {
-        if (!sIsSegmentTableInit) {
-            s32 i;
-            s32 j;
-
-            sIsSegmentTableInit = true;
-
-            for (i = 0; i < ARRAY_COUNT(sEyeSwitchTextures); i++) {
-                for (j = 0; j < ARRAY_COUNT(*sEyeSwitchTextures); j++) {
-                    sEyeSwitchTextures[i][j] = Lib_SegmentedToVirtual(sEyeSwitchTextures[i][j]);
-                }
-            }
-        }
-    }
-    if (type == OBJSWITCH_TYPE_CRYSTAL) {
-        sCrystalSwitchAnimatedMat = Lib_SegmentedToVirtual(gCrystalSwitchTexAnim);
     }
     if (OBJ_SWITCH_IS_FROZEN(&this->dyna.actor)) {
         ObjSwitch_EyeSwitchFrozenInit(this);
@@ -993,7 +972,7 @@ void ObjSwitch_DrawVisibleEyeSwitch(ObjSwitch* this, PlayState* play) {
 
     Gfx_SetupDL25_Opa(play->state.gfxCtx);
     gSPMatrix(POLY_OPA_DISP++, Matrix_NewMtx(play->state.gfxCtx), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
-    gSPSegment(POLY_OPA_DISP++, 0x08, sEyeSwitchTextures[subType][this->eyeTexIndex]);
+    gSPSegment(POLY_OPA_DISP++, 0x08, Lib_SegmentedToVirtual(sEyeSwitchTextures[subType][this->eyeTexIndex]));
     gSPDisplayList(POLY_OPA_DISP++, sEyeSwitchDL[subType]);
 
     CLOSE_DISPS(play->state.gfxCtx);
@@ -1007,7 +986,7 @@ void ObjSwitch_DrawInvisibleEyeSwitch(ObjSwitch* this, PlayState* play) {
 
     Gfx_SetupDL25_Xlu(play->state.gfxCtx);
     gSPMatrix(POLY_XLU_DISP++, Matrix_NewMtx(play->state.gfxCtx), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
-    gSPSegment(POLY_XLU_DISP++, 0x08, sEyeSwitchTextures[subType][this->eyeTexIndex]);
+    gSPSegment(POLY_XLU_DISP++, 0x08, Lib_SegmentedToVirtual(sEyeSwitchTextures[subType][this->eyeTexIndex]));
     gSPDisplayList(POLY_XLU_DISP++, sEyeSwitchDL[subType]);
 
     CLOSE_DISPS(play->state.gfxCtx);
@@ -1027,7 +1006,7 @@ void ObjSwitch_DrawCrystalSwitch(ObjSwitch* this, PlayState* play) {
     OPEN_DISPS(play->state.gfxCtx);
 
     func_800B8118(&this->dyna.actor, play, 0);
-    AnimatedMat_DrawStep(play, sCrystalSwitchAnimatedMat, this->crystalAnimTimer);
+    AnimatedMat_DrawStep(play, Lib_SegmentedToVirtual(gCrystalSwitchTexAnim), this->crystalAnimTimer);
     Gfx_SetupDL25_Opa(play->state.gfxCtx);
     Gfx_SetupDL25_Xlu(play->state.gfxCtx);
 

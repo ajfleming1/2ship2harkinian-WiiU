@@ -19,6 +19,7 @@ std::shared_ptr<Ship::IResource> SetCsCameraFactory::ReadResource(std::shared_pt
         data.count = reader->ReadUInt16();
         if (data.count == 0) {
             data.actorCsCamFuncData = nullptr;
+            setCsCamera->csCamera.emplace_back(data);
             continue;
         }
         data.actorCsCamFuncData = new z64Vec3s[data.count];
