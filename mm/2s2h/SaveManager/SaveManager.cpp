@@ -1,7 +1,12 @@
 #include "SaveManager.h"
 
+#include <cstdio>
 #include <fstream>
 #include <filesystem>
+#include <memory>
+#ifndef _WIN32
+#include <unistd.h>
+#endif
 #include <nlohmann/json.hpp>
 #include <libultraship/libultraship.h>
 
@@ -30,12 +35,21 @@ typedef enum FlashSlotFile {
     /*  9 */ FLASH_SLOT_FILE_SRAM_HEADER_BACKUP,
 } FlashSlotFile;
 
+#ifdef __WIIU__
+#include <whb/log.h>
+#include <port/wiiu/WiiUImpl.h>
+#endif
+
 #define GET_NEWF(save, index) (save.saveInfo.playerData.newf[index])
 #define IS_VALID_FILE(save)                                                                    \
     ((GET_NEWF(save, 0) == 'Z') && (GET_NEWF(save, 1) == 'E') && (GET_NEWF(save, 2) == 'L') && \
      (GET_NEWF(save, 3) == 'D') && (GET_NEWF(save, 4) == 'A') && (GET_NEWF(save, 5) == '3'))
 
-const std::filesystem::path savesFolderPath(Ship::Context::GetPathRelativeToAppDirectory("saves", appShortName));
+static const std::filesystem::path& GetSavesFolderPath() {
+    static const std::filesystem::path folder = Ship::Context::GetPathRelativeToAppDirectory("saves", appShortName);
+    return folder;
+}
+#define savesFolderPath GetSavesFolderPath()
 
 // Migrations
 // The idea here is that we can read in any version of the save as generic JSON, then apply migrations
@@ -104,18 +118,93 @@ int SaveManager_MigrateSave(nlohmann::json& j) {
     }
 }
 
-void SaveManager_WriteSaveFile(std::filesystem::path fileName, nlohmann::json j) {
+static void SaveManager_Notify(const std::string& message) {
+#ifdef __WIIU__
+    WHBLogPrintf("2ship: [save] %s", message.c_str());
+    try {
+        auto gui = Ship::Context::GetInstance()->GetWindow()->GetGui();
+        gui->GetGameOverlay()->TextDrawNotification(6.0f, true, "%s", message.c_str());
+    } catch (...) {}
+#else
+    (void)message;
+#endif
+}
+
+// Reads the whole file into memory. Returns 0 on success, -1 if missing, -3 on I/O error.
+static int SaveManager_ReadFileToString(const std::filesystem::path& filePath, std::string& out) {
+    FILE* fp = fopen(filePath.string().c_str(), "rb");
+    if (fp == nullptr) {
+        return -1;
+    }
+    out.clear();
+    char buf[16 * 1024];
+    size_t n;
+    while ((n = fread(buf, 1, sizeof(buf), fp)) > 0) {
+        out.append(buf, n);
+    }
+    bool err = ferror(fp) != 0;
+    fclose(fp);
+    return err ? -3 : 0;
+}
+
+static bool SaveManager_WriteSaveFileImpl(const std::filesystem::path& fileName, const nlohmann::json& j) {
     const std::filesystem::path filePath = savesFolderPath / fileName;
 
-    if (!std::filesystem::exists(savesFolderPath)) {
-        std::filesystem::create_directory(savesFolderPath);
-    }
-
     try {
-        std::ofstream o(filePath);
-        o << std::setw(4) << j << std::endl;
-        o.close();
-    } catch (...) { SPDLOG_ERROR("Failed to write save file"); }
+        if (!std::filesystem::exists(savesFolderPath)) {
+            std::filesystem::create_directory(savesFolderPath);
+        }
+
+#ifdef __WIIU__
+        // Compact JSON: pretty-printing makes the save ~4x larger (the pictograph alone is 11k array entries),
+        // which means much slower SD writes and much higher peak memory while parsing on load.
+        const std::string data = j.dump() + "\n";
+        WHBLogPrintf("2ship: SaveManager_WriteSaveFile: %s (%zu bytes)", filePath.string().c_str(), data.size());
+#else
+        const std::string data = j.dump(4) + "\n";
+#endif
+
+        FILE* fp = fopen(filePath.string().c_str(), "wb");
+        if (fp == nullptr) {
+            SPDLOG_ERROR("Failed to open save file for writing: {}", filePath.string());
+            if (errno == 30) {
+                SaveManager_Notify("Save FAILED: SD card is WRITE-PROTECTED (errno 30)!\nCheck SD lock switch or adapter");
+            } else {
+                SaveManager_Notify("Save FAILED: could not open " + filePath.filename().string() +
+                                   " (errno " + std::to_string(errno) + ")");
+            }
+            return false;
+        }
+        size_t written = fwrite(data.data(), 1, data.size(), fp);
+        bool ok = (written == data.size()) && (fflush(fp) == 0);
+#ifndef _WIN32
+        fsync(fileno(fp));
+#endif
+        ok = (fclose(fp) == 0) && ok;
+        if (!ok) {
+            SPDLOG_ERROR("Failed to write save file: {}", filePath.string());
+            SaveManager_Notify("Save FAILED: wrote " + std::to_string(written) + "/" + std::to_string(data.size()) +
+                               " bytes to " + fileName.string() + " (SD card full or write-protected?)");
+            return false;
+        }
+
+#ifdef __WIIU__
+        Ship::WiiU::FlushVolume();
+        WHBLogPrintf("2ship: SaveManager_WriteSaveFile completed for %s", filePath.string().c_str());
+#endif
+        return true;
+    } catch (const std::exception& e) {
+        SPDLOG_ERROR("Failed to write save file: {}", e.what());
+        SaveManager_Notify(std::string("Save FAILED: ") + e.what());
+    } catch (...) {
+        SPDLOG_ERROR("Failed to write save file");
+        SaveManager_Notify("Save FAILED: unknown error writing " + fileName.string());
+    }
+    return false;
+}
+
+void SaveManager_WriteSaveFile(std::filesystem::path fileName, nlohmann::json j) {
+    SaveManager_WriteSaveFileImpl(fileName, j);
 }
 
 void SaveManager_DeleteSaveFile(std::filesystem::path fileName) {
@@ -124,25 +213,56 @@ void SaveManager_DeleteSaveFile(std::filesystem::path fileName) {
     try {
         if (std::filesystem::exists(filePath)) {
             std::filesystem::remove(filePath);
+#ifdef __WIIU__
+            Ship::WiiU::FlushVolume();
+            WHBLogPrintf("2ship: SaveManager_DeleteSaveFile: deleted %s and flushed volume", filePath.string().c_str());
+#endif
         }
     } catch (...) { SPDLOG_ERROR("Failed to delete save file"); }
 }
 
+// Returns 0 on success, -1 if the file doesn't exist, -2 if the file is corrupt (bad JSON),
+// -3 on a transient failure (out of memory / I/O error) where the file itself may be perfectly fine.
 int SaveManager_ReadSaveFile(std::filesystem::path fileName, nlohmann::json& j) {
     const std::filesystem::path filePath = savesFolderPath / fileName;
 
     if (!std::filesystem::exists(filePath)) {
+#ifdef __WIIU__
+        WHBLogPrintf("2ship: SaveManager_ReadSaveFile: file not found: %s", filePath.string().c_str());
+#endif
         return -1;
     }
 
     try {
-        std::ifstream i(filePath);
-        i >> j;
-        i.close();
+        std::string data;
+        int ioResult = SaveManager_ReadFileToString(filePath, data);
+        if (ioResult != 0) {
+#ifdef __WIIU__
+            WHBLogPrintf("2ship: SaveManager_ReadSaveFile: I/O error %d reading %s", ioResult,
+                         filePath.string().c_str());
+#endif
+            return ioResult == -1 ? -1 : -3;
+        }
+        j = nlohmann::json::parse(data);
+#ifdef __WIIU__
+        WHBLogPrintf("2ship: SaveManager_ReadSaveFile: successfully loaded %s (%zu bytes)", filePath.string().c_str(),
+                     data.size());
+#endif
         return 0;
-    } catch (...) {
-        SPDLOG_ERROR("Failed to read save file");
+    } catch (const nlohmann::json::parse_error& e) {
+#ifdef __WIIU__
+        WHBLogPrintf("2ship: SaveManager_ReadSaveFile: FAILED to parse %s: %s", filePath.string().c_str(), e.what());
+#endif
+        SPDLOG_ERROR("Failed to parse save file: {}", e.what());
         return -2;
+    } catch (const std::bad_alloc&) {
+        // Never treat running out of memory as a corrupt save: the caller would move the (good) file aside and
+        // fall back to the stale backup.
+        SaveManager_Notify("Out of memory while reading " + fileName.string());
+        return -3;
+    } catch (...) {
+        SaveManager_Notify("Unknown error while reading " + fileName.string());
+        return -3;
     }
 }
 
@@ -307,7 +427,11 @@ extern "C" void SaveManager_SysFlashrom_WriteData(u8* saveBuffer, u32 pageNum, u
 
                 // Read the existing save file to preserve the owl save
                 int result = SaveManager_ReadSaveFile(fileName, j);
-                if (result == -2) {
+                if (result == -3) {
+                    // Writing now would drop the owl save that we failed to read
+                    SaveManager_Notify("Save FAILED: could not read existing " + fileName);
+                    break;
+                } else if (result == -2) {
                     SaveManager_MoveInvalidSaveFile(
                         fileName,
                         "Something went wrong trying to preserve the owl save. Original save file has been backed up.");
@@ -325,6 +449,24 @@ extern "C" void SaveManager_SysFlashrom_WriteData(u8* saveBuffer, u32 pageNum, u
                 j["type"] = "2S2H_SAVE";
 
                 SaveManager_WriteSaveFile(fileName, j);
+
+                if (pageCount == (u32)gFlashSpecialSaveNumPages[flashSlotFile]) {
+                    std::string backupFileName =
+                        SaveManager_GetFileName((flashSlotFile == FLASH_SLOT_FILE_1_NEW_CYCLE) ? 1 : 2, true);
+                    Save backupSave;
+                    memcpy(&backupSave, saveBuffer + 0x2000, sizeof(Save));
+                    if (IS_VALID_FILE(backupSave)) {
+                        nlohmann::json bj;
+                        int bresult = SaveManager_ReadSaveFile(backupFileName, bj);
+                        if (bresult == 0) {
+                            SaveManager_MigrateSave(bj);
+                        }
+                        bj["newCycleSave"]["save"] = backupSave;
+                        bj["version"] = CURRENT_SAVE_VERSION;
+                        bj["type"] = "2S2H_SAVE";
+                        SaveManager_WriteSaveFile(backupFileName, bj);
+                    }
+                }
             } else {
                 // If IS_VALID_FILE fails, we should delete the save file, even if there is an owl save in it, because
                 // they just deleted the new cycle save
@@ -338,13 +480,19 @@ extern "C" void SaveManager_SysFlashrom_WriteData(u8* saveBuffer, u32 pageNum, u
             // fallthrough
         case FLASH_SLOT_FILE_1_OWL_SAVE:
         case FLASH_SLOT_FILE_2_OWL_SAVE: {
-            SaveContext saveContext;
+            // ~18 KB; keep it off the (small) main thread stack
+            std::unique_ptr<SaveContext> saveContextPtr = std::make_unique<SaveContext>();
+            SaveContext& saveContext = *saveContextPtr;
             memcpy(&saveContext, saveBuffer, offsetof(SaveContext, fileNum));
 
             nlohmann::json j;
             // Read the existing save file to preserve the new cycle save
             int result = SaveManager_ReadSaveFile(fileName, j);
-            if (result == -2) {
+            if (result == -3) {
+                // Writing (or worse, deleting) now would drop the new cycle save that we failed to read
+                SaveManager_Notify("Save FAILED: could not read existing " + fileName);
+                break;
+            } else if (result == -2) {
                 SaveManager_MoveInvalidSaveFile(fileName, "Something went wrong trying to preserve the new cycle save. "
                                                           "Original save file has been backed up.");
             } else if (result == 0) {
@@ -360,7 +508,6 @@ extern "C" void SaveManager_SysFlashrom_WriteData(u8* saveBuffer, u32 pageNum, u
                 j["owlSave"] = saveContext;
                 j["version"] = CURRENT_SAVE_VERSION;
                 j["type"] = "2S2H_SAVE";
-
                 SaveManager_WriteSaveFile(fileName, j);
             } else {
                 // If IS_VALID_FILE fails, and there is still a new cycle save present, we just want to only remove the
@@ -434,9 +581,22 @@ extern "C" s32 SaveManager_SysFlashrom_ReadData(void* saveBuffer, u32 pageNum, u
             return -1;
         }
 
-        SaveContext saveContext = j["owlSave"];
+        std::unique_ptr<SaveContext> saveContextPtr = std::make_unique<SaveContext>();
+        try {
+            j.at("owlSave").get_to(*saveContextPtr);
+        } catch (const std::exception& e) {
+            SPDLOG_ERROR("Failed to convert owl save from {}: {}", fileName, e.what());
+            SaveManager_Notify("Owl save in " + fileName + " is unreadable: " + e.what());
+            return -1;
+        }
+#ifdef __WIIU__
+        WHBLogPrintf("2ship: ReadData %s owlSave: day=%d time=0x%04X rupees=%d isOwlSave=%d pauseEntrance=0x%X",
+                     fileName.c_str(), (int)saveContextPtr->save.day, (int)saveContextPtr->save.time,
+                     (int)saveContextPtr->save.saveInfo.playerData.rupees, (int)saveContextPtr->save.isOwlSave,
+                     (int)saveContextPtr->save.shipSaveInfo.pauseSaveEntrance);
+#endif
 
-        memcpy(saveBuffer, &saveContext, offsetof(SaveContext, fileNum));
+        memcpy(saveBuffer, saveContextPtr.get(), offsetof(SaveContext, fileNum));
         return 0;
     } else {
         if (!j.contains("newCycleSave")) {

@@ -1999,6 +1999,26 @@ void Sram_UpdateWriteToFlashDefault(SramContext* sramCtx) {
                 sramCtx->status = 4;
             }
         }
+    } else if (sramCtx->status == 7) {
+        // 2S2H [Enhancement] Pause Save and Autosave start an owl save write (status = 7) and immediately reset
+        // isOwlSave = false, routing subsequent updates here; ensure the backup owl save slot is also written.
+        if (SysFlashrom_IsBusy() != 0) {
+            if (SysFlashrom_AwaitResult() == 0) {
+                SysFlashrom_WriteDataAsync(sramCtx->saveBuf, sramCtx->curPage + 0x80, sramCtx->numPages);
+                sramCtx->status = 8;
+            } else {
+                SysFlashrom_WriteDataAsync(sramCtx->saveBuf, sramCtx->curPage + 0x80, sramCtx->numPages);
+                sramCtx->status = 8;
+            }
+        }
+    } else if (sramCtx->status == 8) {
+        if (SysFlashrom_IsBusy() != 0) {
+            if (SysFlashrom_AwaitResult() == 0) {
+                sramCtx->status = 4;
+            } else {
+                sramCtx->status = 4;
+            }
+        }
     } else if (OSTIME_TO_TIMER(osGetTime() - sramCtx->startWriteOsTime) >=
                SECONDS_TO_TIMER(CVarGetInteger("gEnhancements.Saving.DisableSaveDelay", 0) ? 0 : 2)) {
         // 2S2H [Port] Some tricks require a save delay so we can't just force it to zero

@@ -22,6 +22,7 @@
 #endif
 #ifdef __WIIU__
 #include <coreinit/memorymap.h>
+#include <port/wiiu/WiiUImpl.h>
 #endif
 #include <AudioPlayer.h>
 #include "variables.h"
@@ -483,6 +484,13 @@ extern "C" void InitOTR() {
     GfxPatcher_ApplyNecessaryAuthenticPatches();
     DebugConsole_Init();
 #ifdef __WIIU__
+    if (!Ship::WiiU::IsSdCardWritable()) {
+        auto gui = Ship::Context::GetInstance()->GetWindow()->GetGui();
+        if (gui && gui->GetGameOverlay()) {
+            gui->GetGameOverlay()->TextDrawNotification(
+                25.0f, true, "WARNING: SD card is WRITE-PROTECTED!\nSaves will fail until SD lock switch is fixed.");
+        }
+    }
     WiiU_ReportHeap("after gui/enhancements");
 #endif
 

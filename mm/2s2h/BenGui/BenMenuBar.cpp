@@ -120,7 +120,8 @@ void DrawBenMenu() {
             std::string filesPath = Ship::Context::GetInstance()->GetAppDirectoryPath();
             SDL_OpenURL(std::string("file:///" + std::filesystem::absolute(filesPath).string()).c_str());
         }
-
+#endif
+#if !defined(__SWITCH__)
         if (UIWidgets::MenuItem("Quit")) {
             Ship::Context::GetInstance()->GetWindow()->Close();
         }

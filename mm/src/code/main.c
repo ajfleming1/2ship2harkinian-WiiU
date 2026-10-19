@@ -51,11 +51,9 @@ void InitOTR();
 #define SDL_main main
 #endif
 
-void SDL_main(int argc, char** argv /* void* arg*/) {
+int SDL_main(int argc, char** argv /* void* arg*/) {
     intptr_t fb;
     intptr_t sysHeap;
-    s32 exit;
-    s16* msg;
 
 // Attach console for windows so we can conditionally display it when running the extractor
 #ifdef _WIN32
@@ -117,32 +115,11 @@ void SDL_main(int argc, char** argv /* void* arg*/) {
 
     Graph_ThreadEntry(0);
 
-    exit = false;
-
-    while (!exit) {
-        msg = NULL;
-        osRecvMesg(&sIrqMgrMsgQueue, (OSMesg*)&msg, OS_MESG_BLOCK);
-        if (msg == NULL) {
-            break;
-        }
-
-        switch (*msg) {
-            case OS_SC_PRE_NMI_MSG:
-                Nmi_SetPrenmiStart();
-                break;
-
-            case OS_SC_NMI_MSG:
-                exit = true;
-                break;
-        }
-    }
-
-    IrqMgr_RemoveClient(&gIrqMgr, &sIrqClient);
-    osDestroyThread(&gGraphThread);
-
     DeinitOTR();
 
 #ifdef _WIN32
     FreeConsole();
 #endif
+
+    return 0;
 }

@@ -67,3 +67,12 @@ _packages/
 /mm/src/boot/build.c
 /mm/windows/properties.h
 /out/
+.wiiu_ip
+.claude/
+release_build/
+test_gx2.cpp
+deploy.ps1
+find-wiiu.ps1
+listen-udp.ps1
+run.ps1
+tools/
